@@ -20,8 +20,8 @@ import "fmt"
 */
 
 type Facade struct {
-	r robot
-	b box
+	r *robot
+	b *box
 }
 
 func (f *Facade) MoveFullBox() {
@@ -45,7 +45,11 @@ type box struct{}
 func (b *box) putItem()    { fmt.Println("Item put in the box") }
 func (b *box) removeItem() { fmt.Println("Item removed from the box") }
 
+func NewFacade() *Facade {
+	return &Facade{r: &robot{}, b: &box{}}
+}
+
 func main() {
-	facade := Facade{}
+	facade := NewFacade()
 	facade.MoveFullBox()
 }
