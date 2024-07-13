@@ -1,4 +1,4 @@
-package main
+package pattern
 
 import "fmt"
 
@@ -49,7 +49,7 @@ func NewFacade() *Facade {
 	return &Facade{r: &robot{}, b: &box{}}
 }
 
-func main() {
+func facadeConstruct() {
 	facade := NewFacade()
 	facade.MoveFullBox()
 }
