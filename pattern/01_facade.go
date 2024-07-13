@@ -49,7 +49,7 @@ func NewFacade() *Facade {
 	return &Facade{r: &robot{}, b: &box{}}
 }
 
-func facadeConstruct() {
+func FacadeConstruct() {
 	facade := NewFacade()
 	facade.MoveFullBox()
 }

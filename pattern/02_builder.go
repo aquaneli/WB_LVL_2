@@ -71,7 +71,7 @@ func (Director) ConstructPassengerCar(builder Builder) {
 	builder.SetWheels(4)
 }
 
-func builderConstruct() {
+func BuilderConstruct() {
 	builder := CarBuilder{}
 	d := Director{}
 	d.ConstructPassengerCar(builder)
