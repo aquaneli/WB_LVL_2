@@ -60,23 +60,23 @@ func (CarDrawingBuilder) SetEngine(engine string) {
 /*
 	Используя поведение каждого строителя мы можем сконструировать нужный нам автомобиль
 	Я просто создал конкретных строителей, которые выполняют свою узкую задачу - создать, нарисовать, могу даже например сделать 3D модель,
-	но создам строителя который будет распечатывать на 3D принтере детали
+	но создав строителя который будет распечатывать на 3D принтере детали
 */
 
 type Director struct{}
 
-func (Director) ConstructPassengerCar(builder CarBuilder) {
-	builder.SetDoors(5)
-	builder.SetEngine("Обычный")
-	builder.SetWheels(4)
-}
-
-func (Director) DrawPassengerCar(builder CarBuilder) {
+func (Director) ConstructPassengerCar(builder Builder) {
 	builder.SetDoors(5)
 	builder.SetEngine("Обычный")
 	builder.SetWheels(4)
 }
 
 func builderConstruct() {
+	builder := CarBuilder{}
+	d := Director{}
+	d.ConstructPassengerCar(builder)
+
+	builderDraw := CarDrawingBuilder{}
+	d.ConstructPassengerCar(builderDraw)
 
 }
