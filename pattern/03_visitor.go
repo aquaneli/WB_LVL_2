@@ -21,12 +21,14 @@ import (
 			2. Когда не хочется засорять классы лишними операциями, но требуется расшириться.
 */
 
+/* Интерфейс посетителя , в котором был расширен функционал для каждого класса */
 type Visitor interface {
 	ConverterEuroToRub(Euro)
 	ConverterDollarToRub(Dollar)
 	ConverterYuanToRub(Yuan)
 }
 
+/* Конкретный посетитель это структура в которой реализован интерфейс посетителя длякаждого класса */
 type ConcreteVisitor struct{}
 
 func (ConcreteVisitor) ConverterEuroToRub(e Euro) {
@@ -41,6 +43,7 @@ func (ConcreteVisitor) ConverterYuanToRub(y Yuan) {
 	fmt.Printf("Converting %s to Rub\n", reflect.TypeOf(y))
 }
 
+/* Интерфейс валют в котором реализован метод для посетителя */
 type Currency interface {
 	Accept(Visitor)
 }
