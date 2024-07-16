@@ -22,11 +22,13 @@ import (
 			2. Можно использовать для расширения библиотеки или фреймворка.
 */
 
+/* Продукт определяет общий интерфейс */
 type TransportProduct interface {
 	move()
 	upgrade()
 }
 
+/* Конкретный продукт авто */
 type CarProduct struct{}
 
 func (CarProduct) move() {
@@ -37,6 +39,7 @@ func (CarProduct) upgrade() {
 	fmt.Println("Автомобиль был улучшен")
 }
 
+/* Конкретный продукт корабль */
 type ShipProduct struct{}
 
 func (ShipProduct) move() {
@@ -47,16 +50,19 @@ func (ShipProduct) upgrade() {
 	fmt.Println("Корбаль был улучшен")
 }
 
+/* Creator абстракция которая описывает основной интерфейс создания объектов */
 type TransportCreator interface {
 	CreateTransport() TransportProduct
 }
 
+/* Конкретный Creator авто */
 type CarCreator struct{}
 
 func (CarCreator) CreateTransport() TransportProduct {
 	return &CarProduct{}
 }
 
+/* Конкретный Creator корабля */
 type ShipCreator struct{}
 
 func (ShipCreator) CreateTransport() TransportProduct {
