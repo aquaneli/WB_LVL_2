@@ -106,7 +106,7 @@ func (h *HistoryCommand) popHistory() Command {
 	return cmd
 }
 
-func CommandContruct() {
+func CommandConstruct() {
 	i := Invoker{}
 	db := DataBase{}
 	a := AddCommand{db}
