@@ -10,31 +10,43 @@ import (
 //Обоработать если число будет 0 и обработать escape последовательность
 
 func main() {
-	arr := "䙐0䨸丠刈嗰4"
-	num := -1
+	arr := "qwe\\45"
+	// fmt.Println(Revers(arr))
+	fmt.Println(Unpack(arr))
+}
+
+func Unpack(arr string) string {
+	arr = Revers(arr)
+	num := 1
+	check, escaped := false, false
 	sb := strings.Builder{}
+
 	for _, val := range arr {
-		if val >= '1' && val <= '9' {
-			cnt, _ := strconv.Atoi(string(val))
-			r := []rune(sb.String())
-			if num == -1 && len(r) > 0 {
-				num = cnt
-				sb.WriteString(strings.Repeat(string(r[len(r)-1]), cnt-1))
-			} else {
-				log.Fatalf("incorrect data")
+		if val >= '0' && val <= '9' && !escaped {
+			num, _ = strconv.Atoi(string(val))
+			if check {
+				log.Fatal("dublicate num")
 			}
+			check = true
 		} else {
-			num = -1
-			sb.WriteRune(val)
+			if val == '\\' && !escaped {
+				escaped = true
+			} else {
+				sb.WriteString(strings.Repeat(string(val), num))
+				num = 1
+				check, escaped = false, false
+
+			}
 		}
 	}
-	fmt.Println(sb.String())
+	return Revers(sb.String())
 }
 
 func Revers(str string) string {
-	r := make([]rune, len(str))
-	for i, val := range str {
-		r[len(str)-1-i] = val
+	strRune := []rune(str)
+	r := make([]rune, len(strRune))
+	for i, val := range strRune {
+		r[len(r)-i-1] = val
 	}
 	return string(r)
 }
