@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -10,43 +9,52 @@ import (
 //Обоработать если число будет 0 и обработать escape последовательность
 
 func main() {
-	arr := "qwe\\45"
-	// fmt.Println(Revers(arr))
+	arr := "\\\\5"
 	fmt.Println(Unpack(arr))
 }
 
 func Unpack(arr string) string {
-	arr = Revers(arr)
-	num := 1
-	check, escaped := false, false
+	r := make([]rune, 0, 2)
 	sb := strings.Builder{}
 
 	for _, val := range arr {
-		if val >= '0' && val <= '9' && !escaped {
-			num, _ = strconv.Atoi(string(val))
-			if check {
-				log.Fatal("dublicate num")
+		push(&r, val)
+		if len(r) == 2 {
+			if r[0] == '\\' {
+				if r[1] == '\\' {
+					pop(&r)
+					continue
+				}
 			}
-			check = true
-		} else {
-			if val == '\\' && !escaped {
-				escaped = true
-			} else {
-				sb.WriteString(strings.Repeat(string(val), num))
-				num = 1
-				check, escaped = false, false
+			sb.WriteString(strings.Repeat(pop(&r), number(&r)))
 
-			}
 		}
 	}
-	return Revers(sb.String())
+
+	if len(r) == 1 {
+		sb.WriteString(pop(&r))
+	}
+
+	return sb.String()
 }
 
-func Revers(str string) string {
-	strRune := []rune(str)
-	r := make([]rune, len(strRune))
-	for i, val := range strRune {
-		r[len(r)-i-1] = val
+func number(r *[]rune) int {
+	num := 1
+	if len(*r) > 0 && (*r)[0] >= '0' && (*r)[0] <= '9' {
+		num, _ = strconv.Atoi(pop(r))
 	}
+	return num
+}
+
+func push(queue *[]rune, r rune) {
+	*queue = append(*queue, r)
+}
+
+func pop(queue *[]rune) string {
+	r := (*queue)[0]
+	if len(*queue) > 1 {
+		copy((*queue)[:len(*queue)-1], (*queue)[1:])
+	}
+	*queue = (*queue)[:len(*queue)-1]
 	return string(r)
 }
