@@ -9,7 +9,7 @@ import (
 //Обоработать если число будет 0 и обработать escape последовательность
 
 func main() {
-	arr := "\\\\5"
+	arr := "\\\\\\5"
 	fmt.Println(Unpack(arr))
 }
 
@@ -19,15 +19,16 @@ func Unpack(arr string) string {
 
 	for _, val := range arr {
 		push(&r, val)
-		if len(r) == 2 {
-			if r[0] == '\\' {
-				if r[1] == '\\' {
-					pop(&r)
-					continue
-				}
-			}
-			sb.WriteString(strings.Repeat(pop(&r), number(&r)))
+		if val == '\\' {
+			continue
+		} else if len(r) > 1 && r[len(r)-2] == '\\' {
+			for i := 0; i < len(r); i++ {
 
+			}
+		}
+
+		if len(r) == 2 {
+			sb.WriteString(strings.Repeat(pop(&r), number(&r)))
 		}
 	}
 
