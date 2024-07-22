@@ -1,6 +1,9 @@
-c 1 q
-m 2
-a
-b
-a
-aomputer
+1 computer 150
+mouse 200 qwe qwe qwe qwe 
+3.01 laptop 90 zcx
+3.001 laptop 90 zcx
+bdebian 100
+laptop 30 a
+camputer 450 b 
+10 computer 300 c
+
