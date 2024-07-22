@@ -1,4 +1,7 @@
-1 computer 150
+aas 1 q 23 -1
+Февраль 1 computer 150
+Январь 1 computer 150
+Март 1 computer 150
 mouse 200 qwe qwe qwe qwe
 mouse 200 qwe qwe qwe qwe
 mouse 200 qwe qwe qwe qwe
@@ -7,4 +10,5 @@ mouse 200 qwe qwe qwe qwe
 bdebian 100
 laptop 30 a
 camputer 450 b 
+12345 computer 300 c
 10 computer 300 c
