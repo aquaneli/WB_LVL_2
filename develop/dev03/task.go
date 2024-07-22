@@ -6,8 +6,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strconv"
-	"strings"
 )
 
 type flags struct {
@@ -57,29 +55,46 @@ func main() {
 	// sort.Slice(data, less)
 
 	/* 3.сортировать по числовому значению */
+	// less := func(i, j int) bool {
+	// 	arr1 := strings.Fields(data[i])
+	// 	arr2 := strings.Fields(data[j])
 
-	less := func(i, j int) bool {
-		arr1 := strings.Fields(data[i])
-		arr2 := strings.Fields(data[j])
-		
-		if len(arr1) == 0 || len(arr2) == 0 {
-			return true
+	// 	if len(arr1) == 0 || len(arr2) == 0 {
+	// 		return true
+	// 	}
+
+	// 	fl1, err1 := strconv.ParseFloat(arr1[0], 32)
+	// 	if err1 != nil {
+	// 		return true
+	// 	}
+
+	// 	fl2, err2 := strconv.ParseFloat(arr2[0], 32)
+	// 	if err2 != nil {
+	// 		return false
+	// 	}
+
+	// 	return fl1 < fl2
+	// }
+	// sort.Slice(data, less)
+
+	/* 5.Убрать дубликаты строк */
+	undub := func() []string {
+		m := make(map[string]string, len(data))
+		result := make([]string, 0, len(data))
+		for _, val := range data {
+			_, ok := m[val]
+			if !ok {
+				m[val] = val
+			}
 		}
-
-		fl1, err1 := strconv.ParseFloat(arr1[0], 32)
-		if err1 != nil {
-			return true
+		for _, val := range m {
+			result = append(result, val)
 		}
+		sort.Strings(result)
+		return result
+	}()
 
-		fl2, err2 := strconv.ParseFloat(arr2[0], 32)
-		if err2 != nil {
-			return false
-		}
-
-		return fl1 < fl2
-	}
-
-	sort.Slice(data, less)
+	data = undub
 
 	for _, val := range data {
 		fmt.Println(val)
