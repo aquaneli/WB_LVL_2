@@ -14,21 +14,20 @@ import (
 )
 
 type flags struct {
-	k *int
-	n *bool
-	r *bool
-	u *bool
-
-	M *bool
-	b *bool
-	c *bool
-	h *bool
+	k    *int
+	n    *bool
+	r    *bool
+	u    *bool
+	M    *bool
+	b    *bool
+	c    *bool
+	h    *bool
+	path []string
 }
 
 func main() {
 	args := parseFlags()
-
-	data, err := parseFiles()
+	data, err := parseFiles(&args)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -81,19 +80,27 @@ func parseFlags() flags {
 }
 
 /* Парсинг файлов */
-func parseFiles() ([]string, error) {
+func parseFiles(args *flags) ([]string, error) {
 	data := make([]string, 0, 5)
 	ok := false
-	for _, val := range os.Args[1:] {
-		if val[0] != '-' {
-			scanFile(val, &data)
-			ok = true
-		}
+	pathFiles(args)
+	for _, val := range args.path {
+		scanFile(val, &data)
+		ok = true
 	}
 	if !ok {
 		return []string{}, errors.New("file not specified")
 	}
 	return data, nil
+}
+
+/* Находим все файлы */
+func pathFiles(args *flags) {
+	for _, val := range os.Args[1:] {
+		if val[0] != '-' {
+			args.path = append(args.path, val)
+		}
+	}
 }
 
 /* Сканирование файлов */
