@@ -17,6 +17,11 @@ type flags struct {
 	n *bool
 	r *bool
 	u *bool
+
+	M *bool
+	b *bool
+	c *bool
+	h *bool
 }
 
 func main() {
@@ -29,9 +34,9 @@ func main() {
 
 	sortStrings(&data, args)
 
-	for _, val := range data {
-		fmt.Println(val)
-	}
+	// for _, val := range data {
+	// 	fmt.Println(val)
+	// }
 }
 
 func sortStrings(data *[]string, args flags) {
@@ -41,6 +46,12 @@ func sortStrings(data *[]string, args flags) {
 		NFlag(data)
 	} else if *args.u {
 		UFlag(data)
+	} else if *args.M {
+		MFlag(data)
+	} else if *args.b {
+		BFlag(data)
+	} else if *args.c {
+		CFlag(data)
 	} else {
 		nonFlag(data)
 	}
@@ -50,12 +61,17 @@ func sortStrings(data *[]string, args flags) {
 	}
 }
 
+/* Парсинг флагов */
 func parseFlags() flags {
 	args := flags{}
 	args.k = flag.Int("k", 0, "указание колонки для сортировки")
 	args.n = flag.Bool("n", false, "сортировать по числовому значению")
 	args.r = flag.Bool("r", false, "сортировать в обратном порядке")
 	args.u = flag.Bool("u", false, "не выводить повторяющиеся строки")
+	args.M = flag.Bool("M", false, "сортировать по названию месяца")
+	args.b = flag.Bool("b", false, "игнорировать хвостовые пробелы")
+	args.c = flag.Bool("c", false, "проверять отсортированы ли данные")
+	args.h = flag.Bool("h", false, "сортировать по числовому значению с учетом суффиксов")
 	flag.Parse()
 	return args
 }
@@ -151,7 +167,7 @@ func RFlag(data *[]string) {
 }
 
 /* 5.Убрать дубликаты строк */
-func UFlag(data *[]string) []string {
+func UFlag(data *[]string) {
 	m := make(map[string]string, len(*data))
 	result := make([]string, 0, len(*data))
 	for _, val := range *data {
@@ -164,5 +180,65 @@ func UFlag(data *[]string) []string {
 		result = append(result, val)
 	}
 	sort.Strings(result)
-	return result
+	*data = result
+}
+
+/* 6.Сортировать по названию месяца */
+func MFlag(data *[]string) {
+	less := func(i, j int) bool {
+		arr1 := strings.Fields((*data)[i])
+		arr2 := strings.Fields((*data)[j])
+		return parseMonth(arr1[0]) < parseMonth(arr2[0])
+	}
+	sort.Slice(*data, less)
+}
+
+func parseMonth(arr string) int {
+	switch arr {
+	case "January":
+		return 1
+	case "February":
+		return 2
+	case "March":
+		return 3
+	case "April":
+		return 4
+	case "May":
+		return 5
+	case "June":
+		return 6
+	case "July":
+		return 7
+	case "August":
+		return 8
+	case "September":
+		return 9
+	case "October":
+		return 10
+	case "November":
+		return 11
+	case "December":
+		return 12
+	}
+
+	return 0 // Значение по умолчанию, если месяц не найден
+}
+
+/* 7.Игнорировать хвостовые пробелы */
+func BFlag(data *[]string) {
+	less := func(i, j int) bool {
+		return strings.TrimSpace((*data)[i]) < strings.TrimSpace((*data)[j])
+	}
+	sort.Slice(*data, less)
+}
+
+/* 8.Проверять отсортированы ли данные */
+func CFlag(data *[]string) bool {
+	for i := 0; i <= len(*data)-2; i++ {
+		if (*data)[i] > (*data)[i+1] {
+			fmt.Printf("sort: test.txt:2: disorder: (%d): %s\n", i, (*data)[i+1])
+			return false
+		}
+	}
+	return true
 }
