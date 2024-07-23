@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -12,25 +13,39 @@ import (
 )
 
 type flags struct {
-	k int
-	n bool
-	r bool
-	u bool
+	k *int
+	n *bool
+	r *bool
+	u *bool
 }
 
 func main() {
-	var path string
-	_, err := fmt.Scan(&path)
+	args := flags{}
+	args.k = flag.Int("k", 0, "указание колонки для сортировки")
+	args.n = flag.Bool("n", false, "сортировать по числовому значению")
+	args.r = flag.Bool("r", false, "сортировать в обратном порядке")
+	args.u = flag.Bool("u", false, "не выводить повторяющиеся строки")
+	flag.Parse()
+
+	data, err := parsFiles()
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := parsFile(path)
 
-	args := flags{}
-	args.k = *flag.Int("k", 0, "указание колонки для сортировки")
-	args.n = *flag.Bool("n", false, "сортировать по числовому значению")
-	args.r = *flag.Bool("r", false, "сортировать в обратном порядке")
-	args.u = *flag.Bool("u", false, "не выводить повторяющиеся строки")
+	if *args.k > 0 {
+		KFlag(&data, args)
+	} else if *args.n {
+		NFlag(&data)
+	} else if *args.u {
+		UFlag(&data)
+	} else {
+		nonFlag(&data)
+	}
+
+	if *args.r {
+		sort.Strings(data)
+		sort.Sort(sort.Reverse(sort.StringSlice(data)))
+	}
 
 	/* Сортировка по названию месяца */
 
@@ -39,19 +54,33 @@ func main() {
 	}
 }
 
-/* Парсинг файла */
-func parsFile(path string) []string {
+/* Парсинг файлов */
+func parsFiles() ([]string, error) {
+	data := make([]string, 0, 5)
+	ok := false
+	for _, val := range os.Args[1:] {
+		if val[0] != '-' {
+			scanFile(val, &data)
+			ok = true
+		}
+	}
+	if !ok {
+		return []string{}, errors.New("file not specified")
+	}
+	return data, nil
+}
+
+/* Сканирование файлов */
+func scanFile(path string, data *[]string) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 	sc := bufio.NewScanner(file)
-	data := make([]string, 0, 5)
 	for sc.Scan() {
-		data = append(data, sc.Text())
+		*data = append(*data, sc.Text())
 	}
-	return data
 }
 
 /* 1.Дефолтная сортировка без флагов */
@@ -60,26 +89,25 @@ func nonFlag(data *[]string) {
 }
 
 /* 2.Сортировка по k-й колонке, где колонками в строке являются слова разделенные пробелами */
-func KFlag(data *[]string) {
-	k := 3
+func KFlag(data *[]string, args flags) {
 	less := func(i, j int) bool {
-		if k < 1 {
+		if *args.k < 1 {
 			log.Fatal("incorrect value")
 		}
 		arr1 := strings.Fields((*data)[i])
 		arr2 := strings.Fields((*data)[j])
 
-		if k-1 >= len(arr1) {
+		if *args.k-1 >= len(arr1) {
 			return true
 		}
 
-		if k-1 >= len(arr2) {
+		if *args.k-1 >= len(arr2) {
 			return false
 		}
 
-		return arr1[k-1] < arr2[k-1]
+		return arr1[*args.k-1] < arr2[*args.k-1]
 	}
-	//метод сортирует в зависимости от того хотим ли мы чтобы i элемент стоял перед j
+	// метод сортирует в зависимости от того хотим ли мы чтобы i элемент стоял перед j
 	sort.Slice(*data, less)
 }
 
