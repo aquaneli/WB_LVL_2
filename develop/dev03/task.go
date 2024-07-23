@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type flags struct {
@@ -31,12 +32,13 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	sortStrings(&data, args)
 
-	// for _, val := range data {
-	// 	fmt.Println(val)
-	// }
+	if !*args.c {
+		for _, val := range data {
+			fmt.Println(val)
+		}
+	}
 }
 
 func sortStrings(data *[]string, args flags) {
@@ -52,6 +54,8 @@ func sortStrings(data *[]string, args flags) {
 		BFlag(data)
 	} else if *args.c {
 		CFlag(data)
+	} else if *args.h {
+		HFlag(data)
 	} else {
 		nonFlag(data)
 	}
@@ -220,7 +224,6 @@ func parseMonth(arr string) int {
 	case "December":
 		return 12
 	}
-
 	return 0 // Значение по умолчанию, если месяц не найден
 }
 
@@ -234,11 +237,77 @@ func BFlag(data *[]string) {
 
 /* 8.Проверять отсортированы ли данные */
 func CFlag(data *[]string) bool {
-	for i := 0; i <= len(*data)-2; i++ {
+	for i := 0; i < len(*data)-1; i++ {
 		if (*data)[i] > (*data)[i+1] {
-			fmt.Printf("sort: test.txt:2: disorder: (%d): %s\n", i, (*data)[i+1])
+			fmt.Printf("disorder: %s\n", (*data)[i+1])
 			return false
 		}
 	}
 	return true
+}
+
+/* 9.ортировать по числовому значению с учетом суффиксов */
+func HFlag(data *[]string) {
+	less := func(i, j int) bool {
+		arr1 := strings.Fields((*data)[i])
+		arr2 := strings.Fields((*data)[j])
+		num1, r1 := searchSuffix(arr1[0])
+		num2, r2 := searchSuffix(arr2[0])
+		if r1 == r2 {
+			return num1 < num2
+		}
+		return r1 < r2
+	}
+	sort.Slice(*data, less)
+}
+
+/* Проверка есть ли суффик и корректное ли число перед ним */
+func searchSuffix(arr string) (float64, int) {
+	i := 0
+	for checkPoint := 0; i < len(arr) && (unicode.IsDigit(rune(arr[i])) || arr[i] == '.'); {
+		if arr[i] == '.' {
+			checkPoint++
+		}
+		if checkPoint > 1 {
+			return 0, 0
+		}
+		i++
+	}
+
+	// если числовой части нет, возвращаем 0
+	if i == 0 {
+		return 0, 0
+	}
+	num, err := strconv.ParseFloat(arr[:i], 64)
+	if err != nil {
+		return 0, 0
+	}
+	return num, parseSuffix(arr, i)
+}
+
+/* Обработка суффиксов */
+func parseSuffix(arr string, i int) int {
+	var suffix rune
+	if len(arr) > i {
+		suffix = rune(arr[i])
+	}
+	switch suffix {
+	case 'K':
+		return 1
+	case 'M':
+		return 2
+	case 'G':
+		return 3
+	case 'T':
+		return 4
+	case 'P':
+		return 5
+	case 'E':
+		return 6
+	case 'Z':
+		return 7
+	case 'Y':
+		return 8
+	}
+	return 0
 }
