@@ -43,25 +43,25 @@ func main() {
 
 func sortStrings(data *[]string, args flags) {
 	if *args.k > 0 {
-		KFlag(data, args)
+		kFlag(data, args)
 	} else if *args.n {
-		NFlag(data)
+		nFlag(data)
 	} else if *args.u {
-		UFlag(data)
+		uFlag(data)
 	} else if *args.M {
-		MFlag(data)
+		mFlag(data)
 	} else if *args.b {
-		BFlag(data)
+		bFlag(data)
 	} else if *args.c {
-		CFlag(data)
+		cFlag(data)
 	} else if *args.h {
-		HFlag(data)
+		hFlag(data)
 	} else {
 		nonFlag(data)
 	}
 
 	if *args.r {
-		RFlag(data)
+		rFlag(data)
 	}
 }
 
@@ -115,7 +115,7 @@ func nonFlag(data *[]string) {
 }
 
 /* 2.Сортировка по k-й колонке, где колонками в строке являются слова разделенные пробелами */
-func KFlag(data *[]string, args flags) {
+func kFlag(data *[]string, args flags) {
 	less := func(i, j int) bool {
 		if *args.k < 1 {
 			log.Fatal("incorrect value")
@@ -138,32 +138,37 @@ func KFlag(data *[]string, args flags) {
 }
 
 /* 3.сортировать по числовому значению */
-func NFlag(data *[]string) {
+func nFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
 		arr2 := strings.Fields((*data)[j])
-
 		if len(arr1) == 0 || len(arr2) == 0 {
 			return true
 		}
-
-		fl1, err1 := strconv.ParseFloat(arr1[0], 32)
-		if err1 != nil {
-			return true
-		}
-
-		fl2, err2 := strconv.ParseFloat(arr2[0], 32)
-		if err2 != nil {
-			return false
-		}
-
-		return fl1 < fl2
+		num1 := parseNum(arr1[0])
+		num2 := parseNum(arr2[0])
+		return num1 < num2
 	}
 	sort.Slice(*data, less)
 }
 
+func parseNum(arr string) float64 {
+	i := 0
+	for checkPoint := 0; i < len(arr) && (unicode.IsDigit(rune(arr[i])) || arr[i] == '.'); {
+		if arr[i] == '.' {
+			checkPoint++
+		}
+		if checkPoint > 1 {
+			return 0
+		}
+		i++
+	}
+	res, _ := strconv.ParseFloat(arr[:i], 64)
+	return res
+}
+
 /* 4. делает слайс в обратном порядке */
-func RFlag(data *[]string) {
+func rFlag(data *[]string) {
 	last := len(*data) - 1
 	for i := 0; i < len(*data)/2; i++ {
 		(*data)[i], (*data)[last-i] = (*data)[last-i], (*data)[i]
@@ -171,7 +176,7 @@ func RFlag(data *[]string) {
 }
 
 /* 5.Убрать дубликаты строк */
-func UFlag(data *[]string) {
+func uFlag(data *[]string) {
 	m := make(map[string]string, len(*data))
 	result := make([]string, 0, len(*data))
 	for _, val := range *data {
@@ -188,7 +193,7 @@ func UFlag(data *[]string) {
 }
 
 /* 6.Сортировать по названию месяца */
-func MFlag(data *[]string) {
+func mFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
 		arr2 := strings.Fields((*data)[j])
@@ -228,7 +233,7 @@ func parseMonth(arr string) int {
 }
 
 /* 7.Игнорировать хвостовые пробелы */
-func BFlag(data *[]string) {
+func bFlag(data *[]string) {
 	less := func(i, j int) bool {
 		return strings.TrimSpace((*data)[i]) < strings.TrimSpace((*data)[j])
 	}
@@ -236,7 +241,7 @@ func BFlag(data *[]string) {
 }
 
 /* 8.Проверять отсортированы ли данные */
-func CFlag(data *[]string) bool {
+func cFlag(data *[]string) bool {
 	for i := 0; i < len(*data)-1; i++ {
 		if (*data)[i] > (*data)[i+1] {
 			fmt.Printf("disorder: %s\n", (*data)[i+1])
@@ -247,7 +252,7 @@ func CFlag(data *[]string) bool {
 }
 
 /* 9.ортировать по числовому значению с учетом суффиксов */
-func HFlag(data *[]string) {
+func hFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
 		arr2 := strings.Fields((*data)[j])
