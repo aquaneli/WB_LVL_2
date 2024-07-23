@@ -20,42 +20,48 @@ type flags struct {
 }
 
 func main() {
-	args := flags{}
-	args.k = flag.Int("k", 0, "указание колонки для сортировки")
-	args.n = flag.Bool("n", false, "сортировать по числовому значению")
-	args.r = flag.Bool("r", false, "сортировать в обратном порядке")
-	args.u = flag.Bool("u", false, "не выводить повторяющиеся строки")
-	flag.Parse()
+	args := parseFlags()
 
-	data, err := parsFiles()
+	data, err := parseFiles()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
-	if *args.k > 0 {
-		KFlag(&data, args)
-	} else if *args.n {
-		NFlag(&data)
-	} else if *args.u {
-		UFlag(&data)
-	} else {
-		nonFlag(&data)
-	}
-
-	if *args.r {
-		sort.Strings(data)
-		sort.Sort(sort.Reverse(sort.StringSlice(data)))
-	}
-
-	/* Сортировка по названию месяца */
+	sortStrings(&data, args)
 
 	for _, val := range data {
 		fmt.Println(val)
 	}
 }
 
+func sortStrings(data *[]string, args flags) {
+	if *args.k > 0 {
+		KFlag(data, args)
+	} else if *args.n {
+		NFlag(data)
+	} else if *args.u {
+		UFlag(data)
+	} else {
+		nonFlag(data)
+	}
+
+	if *args.r {
+		RFlag(data)
+	}
+}
+
+func parseFlags() flags {
+	args := flags{}
+	args.k = flag.Int("k", 0, "указание колонки для сортировки")
+	args.n = flag.Bool("n", false, "сортировать по числовому значению")
+	args.r = flag.Bool("r", false, "сортировать в обратном порядке")
+	args.u = flag.Bool("u", false, "не выводить повторяющиеся строки")
+	flag.Parse()
+	return args
+}
+
 /* Парсинг файлов */
-func parsFiles() ([]string, error) {
+func parseFiles() ([]string, error) {
 	data := make([]string, 0, 5)
 	ok := false
 	for _, val := range os.Args[1:] {
@@ -134,6 +140,14 @@ func NFlag(data *[]string) {
 		return fl1 < fl2
 	}
 	sort.Slice(*data, less)
+}
+
+/* 4. делает слайс в обратном порядке */
+func RFlag(data *[]string) {
+	last := len(*data) - 1
+	for i := 0; i < len(*data)/2; i++ {
+		(*data)[i], (*data)[last-i] = (*data)[last-i], (*data)[i]
+	}
 }
 
 /* 5.Убрать дубликаты строк */
