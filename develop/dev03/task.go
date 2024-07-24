@@ -129,7 +129,6 @@ func kFlag(data *[]string, args flags) {
 		}
 		arr1 := strings.Fields((*data)[i])
 		arr2 := strings.Fields((*data)[j])
-
 		if *args.k-1 >= len(arr1) {
 			return true
 		}
@@ -190,12 +189,9 @@ func uFlag(data *[]string) {
 		_, ok := m[val]
 		if !ok {
 			m[val] = val
+			result = append(result, val)
 		}
 	}
-	for _, val := range m {
-		result = append(result, val)
-	}
-	sort.Strings(result)
 	*data = result
 }
 
