@@ -40,6 +40,7 @@ func main() {
 	}
 }
 
+/* Если флаг активирован то будет выполняться сортировка соответствующая флагу */
 func sortStrings(data []string, args flags) []string {
 	if *args.k > 0 {
 		kFlag(&data, args)
