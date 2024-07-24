@@ -31,37 +31,41 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	sortStrings(&data, args)
+	res := sortStrings(data, args)
 
 	if !*args.c {
-		for _, val := range data {
+		for _, val := range res {
 			fmt.Println(val)
 		}
 	}
 }
 
-func sortStrings(data *[]string, args flags) {
+func sortStrings(data []string, args flags) []string {
 	if *args.k > 0 {
-		kFlag(data, args)
+		kFlag(&data, args)
 	} else if *args.n {
-		nFlag(data)
+		nFlag(&data)
 	} else if *args.u {
-		uFlag(data)
+		uFlag(&data)
 	} else if *args.M {
-		mFlag(data)
+		mFlag(&data)
 	} else if *args.b {
-		bFlag(data)
+		bFlag(&data)
 	} else if *args.c {
-		cFlag(data)
+		result := cFlag(&data)
+		if !result {
+			return nil
+		}
 	} else if *args.h {
-		hFlag(data)
+		hFlag(&data)
 	} else {
-		nonFlag(data)
+		nonFlag(&data)
 	}
 
 	if *args.r {
-		rFlag(data)
+		rFlag(&data)
 	}
+	return data
 }
 
 /* Парсинг флагов */
