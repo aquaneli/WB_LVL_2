@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	arr := []string{"тко", "тяпка", "кот", "листок", "Пятак", "слиток", "столик", "окт", "окт", "пЯтка", "слово"}
+	arr := []string{"тко", "тяпка", "кот", "листок", "Пятак", "слиток", "Cлиток", "СЛИТОК", "котилс", "столик", "окт", "окт", "пЯтка", "слово"}
 	anagrams := searchAnagram(arr)
 
 	for key, group := range anagrams {
@@ -23,22 +23,22 @@ func searchAnagram(arr []string) map[string][]string {
 }
 
 /*
-Для каждого уникального первого попавшегося ключа в множестве делаем анаграммы , избавляемся от дублирования и удаляем
-множества если там меньше 2 значений
+Для каждого уникального первого попавшегося ключа в множестве делаем анаграммы ,
+избавляемся от дублирования и добавляем в мапу если больше 1 анаграммы
 */
-
-func buildUniqAnagram(setAnagrams map[string]string, uniqKeys map[string]string) map[string][]string {
+func buildUniqAnagram(setAnagrams map[string]string, uniqKeys map[string]int) map[string][]string {
 	result := make(map[string][]string, 1)
-	for key, val := range uniqKeys {
-		for k, v := range setAnagrams {
-			if key == v {
-				result[val] = append(result[val], k)
+	for uKey, uVal := range uniqKeys {
+		uniqStr := make([]string, 0, uVal)
+		for key, val := range setAnagrams {
+			if uKey == val {
+				uniqStr = append(uniqStr, key)
 			}
 		}
-		if len(result[val]) <= 1 {
-			delete(result, val)
+		if len(uniqStr) > 1 {
+			sort.Strings(uniqStr)
+			result[uniqStr[0]] = uniqStr
 		}
-		sort.Strings(result[val])
 	}
 	return result
 }
@@ -48,15 +48,19 @@ func buildUniqAnagram(setAnagrams map[string]string, uniqKeys map[string]string)
 которому принадлежит каждый уникальный ключ.
 Так же отлавливаем первый попавшийся ключ для множества.
 */
-func sortAnagram(arr []string) (map[string]string, map[string]string) {
+func sortAnagram(arr []string) (map[string]string, map[string]int) {
 	setAnagrams := make(map[string]string, 1)
-	uniqKeys := make(map[string]string, 1)
+	uniqKeys := make(map[string]int, 1)
 
 	for _, val := range arr {
 		lowWord := strings.ToLower(val)
 		sortedWord := sortChars(lowWord)
 		setAnagrams[lowWord] = sortedWord
-		uniqKeys[sortedWord] = lowWord
+		if _, ok := uniqKeys[sortedWord]; !ok {
+			uniqKeys[sortedWord] = 1
+		} else {
+			uniqKeys[sortedWord]++
+		}
 	}
 	return setAnagrams, uniqKeys
 }
