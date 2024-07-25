@@ -29,7 +29,7 @@ func main() {
 
 	bs := bufio.NewScanner(file)
 
-	reg := "и"
+	reg := "0.1"
 	compileReg, err := regexp.Compile(reg)
 	if err != nil {
 		log.Fatal(err)
@@ -107,6 +107,10 @@ func BFlag(cr bool, buff *[]string, buffBefore *[]string, countBefore *int, bs *
 		*countBefore = 0
 		buffBefore = nil
 	}
+}
+
+func CFlag() {
+
 }
 
 func parseFlags() flags {
