@@ -27,7 +27,21 @@ func main() {
 	}
 	defer file.Close()
 
+	/* ----- */
+
+	args := parseFlags()
+
+	/* ----- */
+
 	bs := bufio.NewScanner(file)
+	buff := []string{}
+	for bs.Scan() {
+		buff = append(buff, bs.Text())
+	}
+
+	/* ----- */
+
+	buffRes := []string{}
 
 	reg := "0.1"
 	compileReg, err := regexp.Compile(reg)
@@ -35,37 +49,26 @@ func main() {
 		log.Fatal(err)
 	}
 
-	buff := []string{}
-	buffBefore := []string{}
+	count := 0
+	for i, val := range buff {
 
-	args := parseFlags()
+		buffRes = append(buffRes, val)
+		cr := compileReg.MatchString(val)
 
-	countAfter := 0
-	countBefore := 0
-
-	for bs.Scan() {
-
-		cr := compileReg.MatchString(bs.Text())
-
-		if args.A > 0 {
-			AFlag(cr, &buff, &countAfter, bs, args)
-		} else if args.B > 0 {
-			BFlag(cr, &buff, &buffBefore, &countBefore, bs, args)
-		} else if args.C > 0 {
-
-		} else if cr {
-
-			buff = append(buff, bs.Text())
-
+		if !cr {
+			count++
+		}
+		if cr {
+			if args.B < count {
+				count = args.B
+			}
+			copy(buffRes[len(buffRes)-1-count:], buff[i-count:])
+			count = 0
 		}
 
 	}
 
-	if args.A > 0 && len(buff) > 0 && buff[len(buff)-1] == "--" && countAfter >= args.A {
-		buff = buff[:len(buff)-1]
-	}
-
-	for _, val := range buff {
+	for _, val := range buffRes {
 		fmt.Println(val)
 	}
 
@@ -105,7 +108,7 @@ func BFlag(cr bool, buff *[]string, buffBefore *[]string, countBefore *int, bs *
 		l := len(*buffBefore) - 1 - *countBefore
 		*buff = append(*buff, (*buffBefore)[l:]...)
 		*countBefore = 0
-		buffBefore = nil
+		*buffBefore = (*buffBefore)[:0]
 	}
 }
 
