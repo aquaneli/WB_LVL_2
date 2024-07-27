@@ -33,86 +33,91 @@ func main() {
 
 	/* ----- */
 
+	reg := "0"
+	compileReg, err := regexp.Compile(reg)
+
+	/* ----- */
+
 	bs := bufio.NewScanner(file)
+
 	buff := []string{}
-	for bs.Scan() {
-		buff = append(buff, bs.Text())
+	indexBuff := []int{}
+
+	for i := 0; bs.Scan(); i++ {
+		str := bs.Text()
+		buff = append(buff, str)
+		if compileReg.MatchString(str) {
+			indexBuff = append(indexBuff, i)
+		}
 	}
 
 	/* ----- */
 
 	buffRes := []string{}
-
-	reg := "0.1"
-	compileReg, err := regexp.Compile(reg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	count := 0
-	for i, val := range buff {
+	for i, val := range indexBuff {
+		// fmt.Println(val)
 
-		buffRes = append(buffRes, val)
-		cr := compileReg.MatchString(val)
+		if args.B > 0 {
 
-		if !cr {
-			count++
-		}
-		if cr {
-			if args.B < count {
-				count = args.B
+			if i-1 >= 0 {
+
+				if val-args.B > indexBuff[i-1] {
+					if val-(args.B+1) > indexBuff[i-1] {
+						buffRes = append(buffRes, "--")
+					}
+					buffRes = append(buffRes, buff[val-args.B:val]...)
+				} else {
+					buffRes = append(buffRes, buff[indexBuff[i-1]+1:val]...)
+				}
+
+			} else {
+
+				if args.B > val {
+					buffRes = append(buffRes, buff[:val]...)
+				} else {
+					buffRes = append(buffRes, buff[val-args.B:val]...)
+				}
+
 			}
-			copy(buffRes[len(buffRes)-1-count:], buff[i-count:])
-			count = 0
+
+		}
+
+		buffRes = append(buffRes, buff[val])
+
+		if args.A > 0 {
+
+			if i+1 < len(indexBuff) {
+
+				if val+args.A+1 < indexBuff[i+1] {
+					buffRes = append(buffRes, buff[val+1:val+args.A+1]...)
+					buffRes = append(buffRes, "--")
+				} else {
+					buffRes = append(buffRes, buff[val+1:indexBuff[i+1]]...)
+				}
+
+			} else {
+
+				if val+args.A+1 < len(buff) {
+					buffRes = append(buffRes, buff[val+1:val+args.A+1]...)
+				} else {
+					buffRes = append(buffRes, buff[val+1:]...)
+				}
+
+			}
+
 		}
 
 	}
+
+	/* ----- */
 
 	for _, val := range buffRes {
 		fmt.Println(val)
 	}
-
-}
-
-func AFlag(cr bool, buff *[]string, countAfter *int, bs *bufio.Scanner, args flags) {
-	if cr {
-		*buff = append(*buff, (*bs).Text())
-		*countAfter = 0
-	}
-
-	if !cr && len(*buff) > 0 {
-		if *countAfter < args.A {
-			*buff = append(*buff, (*bs).Text())
-		} else if *countAfter == args.A {
-			*buff = append(*buff, "--")
-		}
-		*countAfter++
-	}
-}
-
-func BFlag(cr bool, buff *[]string, buffBefore *[]string, countBefore *int, bs *bufio.Scanner, args flags) {
-	if !cr {
-		*buffBefore = append(*buffBefore, (*bs).Text())
-		*countBefore++
-	}
-
-	if cr {
-		*buffBefore = append(*buffBefore, (*bs).Text())
-		if *countBefore > args.B {
-			if len(*buff) > 0 {
-				*buff = append(*buff, "--")
-			}
-			*countBefore = args.B
-		}
-
-		l := len(*buffBefore) - 1 - *countBefore
-		*buff = append(*buff, (*buffBefore)[l:]...)
-		*countBefore = 0
-		*buffBefore = (*buffBefore)[:0]
-	}
-}
-
-func CFlag() {
 
 }
 
@@ -127,9 +132,9 @@ func parseFlags() flags {
 	nFlag := flag.Bool("n", false, "сортировать по числовому значению с учетом суффиксов")
 	flag.Parse()
 
-	if flag.NFlag() > 1 {
-		log.Fatalln("Only 1 flag can be used")
-	}
+	// if flag.NFlag() > 1 {
+	// 	log.Fatalln("Only 1 flag can be used")
+	// }
 
 	return flags{
 		A: *AFlag,
