@@ -33,7 +33,7 @@ func main() {
 
 	/* ----- */
 
-	reg := "q"
+	reg := "0.1"
 	compileReg, err := regexp.Compile(reg)
 
 	/* ----- */
@@ -63,16 +63,45 @@ func main() {
 		args.B = args.C
 	}
 
+	sum := 0
+
 	for i, val := range indexBuff {
 
 		if args.B > 0 {
 			buffRes = append(buffRes, BFlag(&buff, &indexBuff, i, args)...)
+
+			buff = buff[val:]
+
+			sum += val
+			indexBuff[i] = 0
+			if i+1 < len(indexBuff) {
+				indexBuff[i+1] -= sum
+			}
+			val = indexBuff[i]
+
 		}
 
 		buffRes = append(buffRes, buff[val])
 
 		if args.A > 0 {
-			buffRes = append(buffRes, AFlag(&buff, &indexBuff, i, args)...)
+			resFlag, num := AFlag(&buff, &indexBuff, i, args)
+
+			buffRes = append(buffRes, resFlag...)
+
+			buff = buff[val+num+1:]
+
+			if i+1 < len(indexBuff) {
+				indexBuff[i+1] = 0
+			} else {
+				indexBuff[i] = 0
+			}
+
+			for _, val := range buff {
+				fmt.Println(val)
+			}
+			fmt.Println("     ")
+			break
+
 		}
 
 	}
@@ -85,7 +114,7 @@ func main() {
 
 }
 
-func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) []string {
+func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
 	buffRes := []string{}
 	val := (*indexBuff)[i]
 
@@ -94,21 +123,25 @@ func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) []string {
 		if val+args.A+1 < (*indexBuff)[i+1] {
 			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
 			buffRes = append(buffRes, "--")
+			val = val + args.A
 		} else {
 			buffRes = append(buffRes, (*buff)[val+1:(*indexBuff)[i+1]]...)
+			val = (*indexBuff)[i+1]
 		}
 
 	} else {
 
 		if val+args.A+1 < len(*buff) {
 			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
+			val = val + args.A
 		} else {
 			buffRes = append(buffRes, (*buff)[val+1:]...)
+			val = val + 1
 		}
 
 	}
 
-	return buffRes
+	return buffRes, val
 }
 
 func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) []string {
