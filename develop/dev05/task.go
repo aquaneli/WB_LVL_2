@@ -63,47 +63,40 @@ func main() {
 		args.B = args.C
 	}
 
-	sum := 0
+	count := 0
 
-	for i, val := range indexBuff {
+	for i := 0; i < len(indexBuff); i++ {
 
+		val := indexBuff[i]
+
+		//отдельно B работает
 		if args.B > 0 {
 			buffRes = append(buffRes, BFlag(&buff, &indexBuff, i, args)...)
-
-			buff = buff[val:]
-
-			sum += val
-			indexBuff[i] = 0
-			if i+1 < len(indexBuff) {
-				indexBuff[i+1] -= sum
-			}
-			val = indexBuff[i]
-
-		}
-
-		buffRes = append(buffRes, buff[val])
-
-		if args.A > 0 {
-			resFlag, num := AFlag(&buff, &indexBuff, i, args)
-
-			buffRes = append(buffRes, resFlag...)
-
-			buff = buff[val+num+1:]
-
-			if i+1 < len(indexBuff) {
-				indexBuff[i+1] = 0
-			} else {
+			if val < len(buff) {
+				buff = buff[val:]
 				indexBuff[i] = 0
 			}
-
-			for _, val := range buff {
-				fmt.Println(val)
+			for j := count; j < len(indexBuff); j++ {
+				indexBuff[j] -= val
 			}
-			fmt.Println("     ")
-			break
-
+			indexBuff[i] = 0
 		}
 
+		if indexBuff[i] >= 0 && indexBuff[i] < len(buff) {
+			buffRes = append(buffRes, buff[indexBuff[i]])
+		}
+
+		//отдельно А работает
+		if args.A > 0 {
+			// resFlag, num := AFlag(&buff, &indexBuff, i, args)
+			// buffRes = append(buffRes, resFlag...)
+
+			// for j := count; j < len(indexBuff); j++ {
+			// 	indexBuff[j] -= num
+			// }
+
+		}
+		count++
 	}
 
 	/* ----- */
@@ -114,35 +107,9 @@ func main() {
 
 }
 
-func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
-	buffRes := []string{}
-	val := (*indexBuff)[i]
+// func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
 
-	if i+1 < len(*indexBuff) {
-
-		if val+args.A+1 < (*indexBuff)[i+1] {
-			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
-			buffRes = append(buffRes, "--")
-			val = val + args.A
-		} else {
-			buffRes = append(buffRes, (*buff)[val+1:(*indexBuff)[i+1]]...)
-			val = (*indexBuff)[i+1]
-		}
-
-	} else {
-
-		if val+args.A+1 < len(*buff) {
-			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
-			val = val + args.A
-		} else {
-			buffRes = append(buffRes, (*buff)[val+1:]...)
-			val = val + 1
-		}
-
-	}
-
-	return buffRes, val
-}
+// }
 
 func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) []string {
 	buffRes := []string{}
