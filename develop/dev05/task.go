@@ -33,7 +33,7 @@ func main() {
 
 	/* ----- */
 
-	reg := "0.1"
+	reg := "0"
 	compileReg, err := regexp.Compile(reg)
 
 	/* ----- */
@@ -51,6 +51,8 @@ func main() {
 		}
 	}
 
+	// fmt.Println(indexBuff)
+
 	/* ----- */
 
 	buffRes := []string{}
@@ -67,76 +69,139 @@ func main() {
 
 	for i := 0; i < len(indexBuff); i++ {
 
-		val := indexBuff[i]
-
-		//отдельно B работает
 		if args.B > 0 {
-			buffRes = append(buffRes, BFlag(&buff, &indexBuff, i, args)...)
-			if val < len(buff) {
-				buff = buff[val:]
-				indexBuff[i] = 0
+			resFlag, num := BFlag(&buff, &indexBuff, i, args)
+			if resFlag != nil {
+				buffRes = append(buffRes, resFlag...)
 			}
+
+			buff = buff[num:]
+
 			for j := count; j < len(indexBuff); j++ {
-				indexBuff[j] -= val
+				indexBuff[j] -= num
 			}
-			indexBuff[i] = 0
+
+			// fmt.Println(indexBuff, buff)
 		}
 
-		if indexBuff[i] >= 0 && indexBuff[i] < len(buff) {
-			buffRes = append(buffRes, buff[indexBuff[i]])
-		}
+		buffRes = append(buffRes, buff[indexBuff[i]])
 
 		//отдельно А работает
 		if args.A > 0 {
-			// resFlag, num := AFlag(&buff, &indexBuff, i, args)
-			// buffRes = append(buffRes, resFlag...)
+			resFlag, num := AFlag(&buff, &indexBuff, i, args)
+			buffRes = append(buffRes, resFlag...)
 
-			// for j := count; j < len(indexBuff); j++ {
-			// 	indexBuff[j] -= num
-			// }
+			buff = buff[num:]
 
+			for j := count; j < len(indexBuff); j++ {
+				indexBuff[j] -= num
+			}
+
+			//если index элемент < 0 то элемента уже не существует
+			// fmt.Println(indexBuff)
 		}
 		count++
 	}
 
 	/* ----- */
 
+	fmt.Println(indexBuff)
 	for _, val := range buffRes {
 		fmt.Println(val)
 	}
 
 }
 
-// func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
-
-// }
-
-func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) []string {
+func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
 	buffRes := []string{}
+
+	//val текущий индекс
 	val := (*indexBuff)[i]
 
-	if i-1 >= 0 {
+	//если не последний индекс
+	if i+1 < len(*indexBuff) {
 
-		if val-args.B > (*indexBuff)[i-1] {
-			if val-(args.B+1) > (*indexBuff)[i-1] {
+		//если от текщего элемента нам нужно взять до следующего индекса но не доходим до него и причем текущий индекс мы не берем
+		if val+args.A < (*indexBuff)[i+1] {
+
+			//взяли срез со следующего элемента после индекса и до args.A+val+1 тут 1 потому что нужно взять след элмент
+			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
+			if args.A+val+1 < (*indexBuff)[i+1] && args.B == 0 {
 				buffRes = append(buffRes, "--")
 			}
-			buffRes = append(buffRes, (*buff)[val-args.B:val]...)
-		} else {
-			buffRes = append(buffRes, (*buff)[(*indexBuff)[i-1]+1:val]...)
+
+			//возвращаем индекс на сколько мы обрезали до куда а +1 потому что мы обрезали и сам индекс
+			return buffRes, val + args.A + 1
+
+			//если от текщего элемента нам нужно взять до следующего индекса но доходим до него и причем текущий индекс мы не берем
+		} else if val+args.A >= (*indexBuff)[i+1] {
+
+			//взяли срез со следующего элемента после индекса и до (*indexBuff)[i+1] т.е следующего индекса тут +1 нет потому что мы не хотим брать следующий индекс
+
+			buffRes = append(buffRes, (*buff)[val+1:(*indexBuff)[i+1]]...)
+
+			//возвращаем индекс на сколько мы обрезали слайс т.е. тут верну индекс следующего элемента потому что он является крайним индексом
+			return buffRes, (*indexBuff)[i+1]
+
 		}
 
+		//если последний индекс
 	} else {
 
-		if args.B > val {
-			buffRes = append(buffRes, (*buff)[:val]...)
-		} else {
-			buffRes = append(buffRes, (*buff)[val-args.B:val]...)
+		//если мы хотим обрезать от текущего элемента и до val+args.A тут + 1 потоу что нужно взять следующий элемент но элементов осталось больше чем нам нужно
+		if val+args.A < len(*buff) {
+			buffRes = append(buffRes, (*buff)[val+1:val+args.A+1]...)
+
+			//если мы хотим обрезать от текущего элемента и до val+args.A тут + 1 потоу что нужно взять следующий элемент но но элементов осталось меньше чем нам нужно
+		} else if val+args.A >= len(*buff) {
+			buffRes = append(buffRes, (*buff)[val+1:]...)
 		}
 
 	}
+	return buffRes, 0
+}
 
-	return buffRes
+func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
+	buffRes := []string{}
+	val := (*indexBuff)[i]
+
+	//берем срез для самого первого элемента
+	if i == 0 {
+		//если мы хотим взять элементов больше чем есть сверху
+		if args.B > val {
+
+			//взяли от самго начала и до индекса но не сам индекс
+			buffRes = append(buffRes, (*buff)[:val]...)
+
+			//val на сколько элементов нужно сократить  buff т.е val будет указывать на индекс
+			return buffRes, val
+		} else if args.B <= val {
+			buffRes = append(buffRes, (*buff)[val-args.B:val]...)
+
+			//тут берем не val-args.B а просто val так как теперь это будет верхушкой
+			return buffRes, val
+		}
+
+		//теперь тут берем для всех остальных элементов
+	} else {
+
+		if args.B >= val {
+			if args.C > 0 {
+				buffRes = append(buffRes, (*buff)[:val]...)
+				return buffRes, val
+			} else {
+				buffRes = append(buffRes, (*buff)[1:val]...)
+				return buffRes, val
+			}
+
+		} else if args.B < val {
+			buffRes = append(buffRes, "--")
+			buffRes = append(buffRes, (*buff)[val-args.B:val]...)
+			return buffRes, val
+		}
+	}
+
+	return buffRes, val
 }
 
 func parseFlags() flags {
