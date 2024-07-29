@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -10,39 +11,42 @@ import (
 )
 
 type flags struct {
-	A int
-	B int
-	C int
-	c bool
-	i bool
-	v bool
-	F bool
-	n bool
+	A        int
+	B        int
+	C        int
+	c        bool
+	i        bool
+	v        bool
+	F        bool
+	n        bool
+	pattern  string
+	pathFile []string
 }
 
 func main() {
-	file, err := os.Open("test.txt")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
 
-	args := parseFlags()
-	buff, indexBuff := parseFile(file, args)
-	buffRes := []string{}
+	args, err := parseFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	buff, indexBuff := parseFile(args)
 
 	if !args.c {
-		buffRes = process(buff, indexBuff, args)
+		buffRes := process(buff, indexBuff, args)
 		for _, val := range buffRes {
 			fmt.Println(val)
 		}
 	} else {
-		fmt.Println(len(indexBuff))
+		for _, v := range indexBuff {
+			fmt.Println(len(v))
+		}
+
 	}
 
 }
 
-func parseFlags() flags {
+func parseFlags() (flags, error) {
 	AFlag := flag.Int("A", 0, "указание колонки для сортировки")
 	BFlag := flag.Int("B", 0, "сортировать по числовому значению")
 	CFlag := flag.Int("C", 0, "сортировать в обратном порядке")
@@ -53,23 +57,62 @@ func parseFlags() flags {
 	nFlag := flag.Bool("n", false, "сортировать по числовому значению с учетом суффиксов")
 	flag.Parse()
 
-	if flag.NFlag() > 1 {
-		log.Fatalln("Only 1 flag can be used")
+	if len(flag.Args()) < 2 {
+		return flags{}, errors.New("file not specified\nusage: ./task [pattern] [-A num] [-B num] [-C num] [-c -i -v -F -n] [files...]")
 	}
+
+	patternArg := flag.Arg(0)
+	path := flag.Args()[1:]
 
 	return flags{
-		A: *AFlag,
-		B: *BFlag,
-		C: *CFlag,
-		c: *cFlag,
-		i: *iFlag,
-		v: *vFlag,
-		F: *FFlag,
-		n: *nFlag,
-	}
+		A:        *AFlag,
+		B:        *BFlag,
+		C:        *CFlag,
+		c:        *cFlag,
+		i:        *iFlag,
+		v:        *vFlag,
+		F:        *FFlag,
+		n:        *nFlag,
+		pattern:  patternArg,
+		pathFile: path,
+	}, nil
 }
 
-func process(buff []string, indexBuff []int, args flags) []string {
+func parseFile(args flags) ([][]string, [][]int) {
+	buff := make([][]string, len(args.pathFile))
+	indexBuff := make([][]int, len(args.pathFile))
+
+	for i, val := range args.pathFile {
+		file, err := os.Open(val)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer file.Close()
+
+		if args.i {
+			args.pattern = "(?i)" + args.pattern
+		}
+
+		compileReg, err := regexp.Compile(args.pattern)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bs := bufio.NewScanner(file)
+
+		for j := 0; bs.Scan(); j++ {
+			str := bs.Text()
+			buff[i] = append(buff[i], str)
+			if compileReg.MatchString(str) {
+				indexBuff[i] = append(indexBuff[i], j)
+			}
+		}
+	}
+
+	return buff, indexBuff
+}
+
+func process(buff [][]string, indexBuff [][]int, args flags) []string {
 
 	if args.C > 0 {
 		args.A = args.C
@@ -78,52 +121,26 @@ func process(buff []string, indexBuff []int, args flags) []string {
 
 	buffRes := []string{}
 
-	for i := 0; i < len(indexBuff); i++ {
-		if args.B > 0 {
-			resFlag, num := BFlag(&buff, &indexBuff, i, args)
-			buffRes = append(buffRes, resFlag...)
-			trimSlice(&buff, &indexBuff, num, i)
-		}
+	for i := range indexBuff {
 
-		buffRes = append(buffRes, buff[indexBuff[i]])
+		for j := 0; j < len(indexBuff[i]); j++ {
+			if args.B > 0 {
+				resFlag, num := BFlag(&buff[i], &indexBuff[i], j, args)
+				buffRes = append(buffRes, resFlag...)
+				trimSlice(&buff[i], &indexBuff[i], num, j)
+			}
 
-		if args.A > 0 {
-			resFlag, num := AFlag(&buff, &indexBuff, i, args)
-			buffRes = append(buffRes, resFlag...)
-			trimSlice(&buff, &indexBuff, num, i)
+			buffRes = append(buffRes, buff[i][indexBuff[i][j]])
+
+			if args.A > 0 {
+				resFlag, num := AFlag(&buff[i], &indexBuff[i], j, args)
+				buffRes = append(buffRes, resFlag...)
+				trimSlice(&buff[i], &indexBuff[i], num, j)
+			}
 		}
+		
 	}
 	return buffRes
-}
-
-func parseFile(file *os.File, args flags) ([]string, []int) {
-	reg := ""
-	if len(os.Args) > 2 {
-		reg = os.Args[2]
-	}
-	if args.i {
-		reg = "(?i)" + reg
-	}
-	compileReg, err := regexp.Compile(reg)
-
-	bs := bufio.NewScanner(file)
-
-	buff := []string{}
-	indexBuff := []int{}
-
-	for i := 0; bs.Scan(); i++ {
-		str := bs.Text()
-		buff = append(buff, str)
-		if compileReg.MatchString(str) {
-			indexBuff = append(indexBuff, i)
-		}
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return buff, indexBuff
 }
 
 func trimSlice(buff *[]string, indexBuff *[]int, num, i int) {
@@ -134,6 +151,7 @@ func trimSlice(buff *[]string, indexBuff *[]int, num, i int) {
 
 }
 
+// AFlag добавляет в результирующий буффер +N строк после совпадения
 func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
 	buffRes := []string{}
 	val := (*indexBuff)[i]
@@ -165,6 +183,7 @@ func AFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) 
 	return buffRes, num
 }
 
+// BFlag добавляет в результирующий буффер +N строк до совпадения
 func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) {
 	buffRes := []string{}
 	val := (*indexBuff)[i]
@@ -178,7 +197,7 @@ func BFlag(buff *[]string, indexBuff *[]int, i int, args flags) ([]string, int) 
 		}
 	} else {
 		if args.B >= val {
-			if args.C > 0 {
+			if args.C > 0 || (args.A > 0 && args.B > 0) {
 				buffRes = append(buffRes, (*buff)[:val]...)
 			} else {
 				buffRes = append(buffRes, (*buff)[1:val]...)
