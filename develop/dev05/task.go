@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type flags struct {
@@ -100,21 +101,33 @@ func parseFile(args flags) ([][]string, [][]int) {
 		for j := 0; bs.Scan(); j++ {
 			str := bs.Text()
 			buff[i] = append(buff[i], str)
-			if args.v && !compileReg.MatchString(str) || !args.v && compileReg.MatchString(str) || args.F && (str == args.pattern) {
+
+			cmp := true
+
+			if args.F && strings.Compare(str, args.pattern) != 0 {
+				cmp = false
+			} else if !args.F && !compileReg.MatchString(str) {
+				cmp = false
+			}
+
+			if args.v && !cmp || !args.v && cmp {
 				indexBuff[i] = append(indexBuff[i], j)
 			}
+
 		}
 	}
 
 	return buff, indexBuff
 }
 
-func process(buff [][]string, indexBuff [][]int, args flags) {
+func process(buff [][]string, indexBuff [][]int, args flags) [][]string {
 
 	if args.C > 0 {
 		args.A = args.C
 		args.B = args.C
 	}
+
+	// resBuff := [][]string{}
 
 	for i := range indexBuff {
 
@@ -126,9 +139,21 @@ func process(buff [][]string, indexBuff [][]int, args flags) {
 			}
 
 			if len(indexBuff) > 1 {
-				fmt.Printf("%s:%s\n", args.pathFile[i], buff[i][indexBuff[i][j]])
+
+				// if !args.n {
+				// 	fmt.Printf("%s:%s\n", args.pathFile[i], buff[i][indexBuff[i][j]])
+				// } else {
+				// 	fmt.Printf("%s:%d:%s\n", args.pathFile[i], numberStr+1, buff[i][indexBuff[i][j]])
+				// }
+
 			} else {
-				fmt.Printf("%s\n", buff[i][indexBuff[i][j]])
+
+				// if !args.n {
+				// 	fmt.Printf("%s\n", buff[i][indexBuff[i][j]])
+				// } else {
+				// 	fmt.Printf("%d:%s\n", numberStr+1, buff[i][indexBuff[i][j]])
+				// }
+
 			}
 
 			if args.A > 0 {
@@ -157,9 +182,9 @@ func AFlag(buff *[]string, indexBuff *[]int, args flags, indexFile, j int) int {
 
 		if val+args.A < (*indexBuff)[j+1] {
 			printLines((*buff)[val+1:val+args.A+1], args, indexFile)
-			if args.A+val+1 < (*indexBuff)[j+1] {
-				fmt.Println("--")
-			}
+			// if args.A+val+1 < (*indexBuff)[j+1] {
+			// 	fmt.Println("--")
+			// }
 			num = val + args.A + 1
 		} else if val+args.A >= (*indexBuff)[j+1] {
 			printLines((*buff)[val+1:(*indexBuff)[j+1]], args, indexFile)
@@ -204,9 +229,9 @@ func BFlag(buff *[]string, indexBuff *[]int, args flags, indexFile, j int) int {
 
 		} else if args.B < val {
 
-			if val-args.B > 0 {
-				fmt.Println("--")
-			}
+			// if val-args.B > 0 {
+			// 	fmt.Println("--")
+			// }
 			printLines((*buff)[val-args.B:val], args, indexFile)
 
 		}
