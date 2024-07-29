@@ -25,23 +25,25 @@ type flags struct {
 }
 
 func main() {
-
 	args, err := parseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
+	buff, indexBuff, buffStr := parseFile(args)
+	indexBuffReserve := getCopyIndexBuff(indexBuff)
+	resBuff := process(buff, indexBuff, args)
+	printBuff(resBuff, indexBuffReserve, buffStr, args)
+}
 
-	buff, indexBuff := parseFile(args)
-
-	if !args.c {
-		process(buff, indexBuff, args)
-	} else {
-		for _, v := range indexBuff {
-			fmt.Println(len(v))
+func getCopyIndexBuff(indexBuff [][]int) [][]int {
+	indexBuffReserve := make([][]int, len(indexBuff))
+	for i := range indexBuff {
+		for range indexBuff[i] {
+			indexBuffReserve[i] = make([]int, len(indexBuff[i]))
+			copy(indexBuffReserve[i], indexBuff[i])
 		}
-
 	}
-
+	return indexBuffReserve
 }
 
 func parseFlags() (flags, error) {
@@ -76,8 +78,75 @@ func parseFlags() (flags, error) {
 	}, nil
 }
 
-func parseFile(args flags) ([][]string, [][]int) {
-	buff := make([][]string, len(args.pathFile))
+func printBuff(resBuff, indexBuffReserve [][]int, buffStr [][]string, args flags) {
+	if !args.c {
+
+		for i := range resBuff {
+			count := 0
+			for j, v := range resBuff[i] {
+				if len(resBuff) > 1 {
+					printManyFiles(indexBuffReserve, buffStr, args, v, i, count)
+				} else {
+					printOneFile(indexBuffReserve, buffStr, args, v, i, count)
+				}
+				if j+1 < len(resBuff[i]) && (resBuff[i][j+1]-resBuff[i][j] > 1) {
+					fmt.Println("--")
+				}
+			}
+			if len(resBuff[i]) > 0 && i < len(resBuff)-1 {
+				fmt.Println("--")
+			}
+		}
+
+	} else {
+		printFilesFlagC(indexBuffReserve, args)
+	}
+}
+
+func printManyFiles(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i, count int) {
+	if !args.n {
+		if count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][count] {
+			fmt.Printf("%s:%s\n", args.pathFile[i], buffStr[i][v])
+			count++
+		} else {
+			fmt.Printf("%s-%s\n", args.pathFile[i], buffStr[i][v])
+		}
+	} else {
+		if count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][count] {
+			fmt.Printf("%s:%d:%s\n", args.pathFile[i], v+1, buffStr[i][v])
+			count++
+		} else {
+			fmt.Printf("%s-%d-%s\n", args.pathFile[i], v+1, buffStr[i][v])
+		}
+	}
+}
+
+func printOneFile(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i, count int) {
+	if !args.n {
+		fmt.Printf("%s\n", buffStr[i][v])
+	} else {
+		if v == indexBuffReserve[i][count] {
+			fmt.Printf("%d:%s\n", v+1, buffStr[i][v])
+		} else {
+			fmt.Printf("%d-%s\n", v+1, buffStr[i][v])
+		}
+	}
+}
+
+func printFilesFlagC(indexBuffReserve [][]int, args flags) {
+	for i, v := range indexBuffReserve {
+		if len(indexBuffReserve) > 1 {
+			fmt.Printf("%s:%d\n", args.pathFile[i], len(v))
+		} else {
+			fmt.Printf("%d\n", len(v))
+		}
+
+	}
+}
+
+func parseFile(args flags) ([][]int, [][]int, [][]string) {
+	buff := make([][]int, len(args.pathFile))
+	buffStr := make([][]string, len(args.pathFile))
 	indexBuff := make([][]int, len(args.pathFile))
 
 	for i, val := range args.pathFile {
@@ -100,8 +169,8 @@ func parseFile(args flags) ([][]string, [][]int) {
 
 		for j := 0; bs.Scan(); j++ {
 			str := bs.Text()
-			buff[i] = append(buff[i], str)
-
+			buff[i] = append(buff[i], j)
+			buffStr[i] = append(buffStr[i], str)
 			cmp := true
 
 			if args.F && strings.Compare(str, args.pattern) != 0 {
@@ -117,137 +186,109 @@ func parseFile(args flags) ([][]string, [][]int) {
 		}
 	}
 
-	return buff, indexBuff
+	return buff, indexBuff, buffStr
 }
 
-func process(buff [][]string, indexBuff [][]int, args flags) [][]string {
+func process(buff [][]int, indexBuff [][]int, args flags) [][]int {
 
 	if args.C > 0 {
 		args.A = args.C
 		args.B = args.C
 	}
 
-	// resBuff := [][]string{}
+	resBuff := make([][]int, len(buff))
 
 	for i := range indexBuff {
-
 		for j := 0; j < len(indexBuff[i]); j++ {
 
 			if args.B > 0 {
-				num := BFlag(&buff[i], &indexBuff[i], args, i, j)
+				res, num := BFlag(&buff[i], &indexBuff[i], args, i, j)
+				resBuff[i] = append(resBuff[i], res...)
 				trimSlice(&buff[i], &indexBuff[i], num, j)
 			}
 
-			if len(indexBuff) > 1 {
-
-				// if !args.n {
-				// 	fmt.Printf("%s:%s\n", args.pathFile[i], buff[i][indexBuff[i][j]])
-				// } else {
-				// 	fmt.Printf("%s:%d:%s\n", args.pathFile[i], numberStr+1, buff[i][indexBuff[i][j]])
-				// }
-
-			} else {
-
-				// if !args.n {
-				// 	fmt.Printf("%s\n", buff[i][indexBuff[i][j]])
-				// } else {
-				// 	fmt.Printf("%d:%s\n", numberStr+1, buff[i][indexBuff[i][j]])
-				// }
-
-			}
+			resBuff[i] = append(resBuff[i], buff[i][indexBuff[i][j]])
 
 			if args.A > 0 {
-				num := AFlag(&buff[i], &indexBuff[i], args, i, j)
+				res, num := AFlag(&buff[i], &indexBuff[i], args, i, j)
+				resBuff[i] = append(resBuff[i], res...)
 				trimSlice(&buff[i], &indexBuff[i], num, j)
 			}
+
 		}
 
 	}
+	return resBuff
 }
 
-func trimSlice(buff *[]string, indexBuff *[]int, num, i int) {
+func trimSlice(buff *[]int, indexBuff *[]int, num, i int) {
 	*buff = (*buff)[num:]
 	for j := i; j < len(*indexBuff); j++ {
 		(*indexBuff)[j] -= num
 	}
-
 }
 
 // AFlag печатает в результирующий буффер +N строк после совпадения
-func AFlag(buff *[]string, indexBuff *[]int, args flags, indexFile, j int) int {
+func AFlag(buff *[]int, indexBuff *[]int, args flags, indexFile, j int) ([]int, int) {
 	val := (*indexBuff)[j]
+	resBuff := []int{}
 	num := 0
 
 	if j+1 < len(*indexBuff) {
 
 		if val+args.A < (*indexBuff)[j+1] {
-			printLines((*buff)[val+1:val+args.A+1], args, indexFile)
-			// if args.A+val+1 < (*indexBuff)[j+1] {
-			// 	fmt.Println("--")
-			// }
+			resBuff = append(resBuff, (*buff)[val+1:val+args.A+1]...)
 			num = val + args.A + 1
+
 		} else if val+args.A >= (*indexBuff)[j+1] {
-			printLines((*buff)[val+1:(*indexBuff)[j+1]], args, indexFile)
+			resBuff = append(resBuff, (*buff)[val+1:(*indexBuff)[j+1]]...)
 			num = (*indexBuff)[j+1]
 		}
 
 	} else {
 
 		if val+args.A < len(*buff) {
-			printLines((*buff)[val+1:val+args.A+1], args, indexFile)
+			resBuff = append(resBuff, (*buff)[val+1:val+args.A+1]...)
+
 		} else if val+args.A >= len(*buff) {
-			printLines((*buff)[val+1:], args, indexFile)
+			resBuff = append(resBuff, (*buff)[val+1:]...)
 		}
 
 	}
 
-	return num
+	return resBuff, num
 }
 
 // BFlag печатает в результирующий буффер +N строк до совпадения
-func BFlag(buff *[]string, indexBuff *[]int, args flags, indexFile, j int) int {
+func BFlag(buff *[]int, indexBuff *[]int, args flags, indexFile, j int) ([]int, int) {
 	val := (*indexBuff)[j]
+	resBuff := []int{}
 
 	if j == 0 {
 
 		if args.B > val {
-			printLines((*buff)[:val], args, indexFile)
+			resBuff = append(resBuff, (*buff)[:val]...)
 
 		} else if args.B <= val {
-			printLines((*buff)[val-args.B:val], args, indexFile)
+			resBuff = append(resBuff, (*buff)[val-args.B:val]...)
 		}
 
 	} else {
 
 		if args.B >= val {
-
 			if args.C > 0 || (args.A > 0 && args.B > 0) {
-				printLines((*buff)[:val], args, indexFile)
+				resBuff = append(resBuff, (*buff)[:val]...)
+
 			} else {
-				printLines((*buff)[1:val], args, indexFile)
+				resBuff = append(resBuff, (*buff)[1:val]...)
 			}
 
 		} else if args.B < val {
-
-			// if val-args.B > 0 {
-			// 	fmt.Println("--")
-			// }
-			printLines((*buff)[val-args.B:val], args, indexFile)
+			resBuff = append(resBuff, (*buff)[val-args.B:val]...)
 
 		}
 
 	}
 
-	return val
-}
-
-func printLines(buff []string, args flags, indexFile int) {
-	for _, v := range buff {
-		if len(args.pathFile) > 1 {
-			fmt.Printf("%s-%s\n", args.pathFile[indexFile], v)
-		} else {
-			fmt.Printf("%s\n", v)
-		}
-
-	}
+	return resBuff, val
 }
