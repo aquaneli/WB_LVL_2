@@ -1,14 +1,18 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"flag"
-	"fmt"
+	"log"
+	"os"
 	"regexp"
+	"strconv"
 )
 
 type cutArgs struct {
-	args          flags
-	formatStrings []string
+	args flags
+	path []string
 }
 
 type flags struct {
@@ -18,35 +22,96 @@ type flags struct {
 }
 
 func main() {
-	parseFlags()
+	cA, err := parseFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
+	parseFiles(cA)
+
+}
+
+func parseFiles(cA *cutArgs) error {
+	str := make([][]string, len(cA.path))
+	for i, val := range cA.path {
+		file, err := os.Open(val)
+		if err != nil {
+			return err
+		}
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			str[i] = append(str[i])
+		}
+	}
+	return nil
 }
 
 func parseFlags() (*cutArgs, error) {
 	fFlag := flag.String("f", "", "выбрать поля (колонки)")
-	// dFlag := flag.String("d", "", "использовать другой разделитель")
-	// sFlag := flag.Bool("s", false, "только строки с разделителем")
+	dFlag := flag.String("d", "\t", "использовать другой разделитель")
+	sFlag := flag.Bool("s", false, "только строки с разделителем")
 	flag.Parse()
 
-	// if len(flag.Args()) < 2 {
-	// 	return &cutArgs{}, errors.New("file not specified\nusage: ")
-	// }
+	if len(flag.Args()) < 2 {
+		return nil, errors.New("file not specified\nusage: ")
+	}
 
-	// fConvInt, err := strconv.Atoi(*fFlag)
-	// if err != nil{
-	// 	log.Fatal(err)
-	// }
-	// path := flag.Args()[1:]
-	
+	numCols, err := searchReg(*fFlag)
+	if err != nil {
+		return nil, err
+	}
 
-	// parts := strings.Split(*fFlag, ",")
-	re := regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
-	matches := re.FindStringSubmatch(*fFlag)
+	return &cutArgs{
+		args: flags{
+			f: numCols,
+			d: *dFlag,
+			s: *sFlag},
+		path: os.Args[1:],
+	}, nil
+}
 
-	// for _, v := range parts {
+func searchReg(strReg string) ([]int, error) {
+	var result []int
+	seen := make(map[int]struct{})
 
-	// }
+	// Проверка на допустимые символы (только цифры, запятые и дефисы)
+	if matched, _ := regexp.MatchString(`^[\d,-]+$`, strReg); !matched {
+		return nil, errors.New("invalid characters in input string")
+	}
 
-	fmt.Println(matches)
+	// Регулярное выражение для обработки диапазонов и отдельных чисел
+	re := regexp.MustCompile(`(\d+)(?:-(\d+))?`)
 
-	return &cutArgs{}, nil
+	// Находим все совпадения
+	matches := re.FindAllStringSubmatch(strReg, -1)
+
+	for _, match := range matches {
+		// Начальное значение диапазона или одиночное число
+		start, err := strconv.Atoi(match[1])
+		if err != nil {
+			return nil, err
+		}
+
+		if match[2] != "" {
+			// Если это диапазон
+			end, err := strconv.Atoi(match[2])
+			if err != nil {
+				return nil, err
+			}
+			// Добавляем все числа из диапазона
+			for i := start; i <= end; i++ {
+				if _, found := seen[i]; !found {
+					result = append(result, i)
+					seen[i] = struct{}{}
+				}
+			}
+		} else {
+			// Если это одиночное число
+			if _, found := seen[start]; !found {
+				result = append(result, start)
+				seen[start] = struct{}{}
+			}
+		}
+	}
+	return result, nil
 }
