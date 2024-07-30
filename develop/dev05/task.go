@@ -79,15 +79,16 @@ func parseFlags() (flags, error) {
 }
 
 func printBuff(resBuff, indexBuffReserve [][]int, buffStr [][]string, args flags) {
+
 	if !args.c {
 
 		for i := range resBuff {
 			count := 0
 			for j, v := range resBuff[i] {
 				if len(resBuff) > 1 {
-					printManyFiles(indexBuffReserve, buffStr, args, v, i, count)
+					printManyFiles(indexBuffReserve, buffStr, args, v, i, &count)
 				} else {
-					printOneFile(indexBuffReserve, buffStr, args, v, i, count)
+					printOneFile(indexBuffReserve, buffStr, args, v, i, &count)
 				}
 				if j+1 < len(resBuff[i]) && (resBuff[i][j+1]-resBuff[i][j] > 1) {
 					fmt.Println("--")
@@ -103,30 +104,31 @@ func printBuff(resBuff, indexBuffReserve [][]int, buffStr [][]string, args flags
 	}
 }
 
-func printManyFiles(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i, count int) {
+func printManyFiles(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i int, count *int) {
 	if !args.n {
-		if count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][count] {
+		if *count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][*count] {
 			fmt.Printf("%s:%s\n", args.pathFile[i], buffStr[i][v])
-			count++
+			*count++
 		} else {
 			fmt.Printf("%s-%s\n", args.pathFile[i], buffStr[i][v])
 		}
 	} else {
-		if count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][count] {
+		if *count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][*count] {
 			fmt.Printf("%s:%d:%s\n", args.pathFile[i], v+1, buffStr[i][v])
-			count++
+			*count++
 		} else {
 			fmt.Printf("%s-%d-%s\n", args.pathFile[i], v+1, buffStr[i][v])
 		}
 	}
 }
 
-func printOneFile(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i, count int) {
+func printOneFile(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i int, count *int) {
 	if !args.n {
 		fmt.Printf("%s\n", buffStr[i][v])
 	} else {
-		if v == indexBuffReserve[i][count] {
+		if v == indexBuffReserve[i][*count] {
 			fmt.Printf("%d:%s\n", v+1, buffStr[i][v])
+			*count++
 		} else {
 			fmt.Printf("%d-%s\n", v+1, buffStr[i][v])
 		}
