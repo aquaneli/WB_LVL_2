@@ -24,35 +24,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	getResult(*args)
+}
 
-	// r, w, err := os.Pipe()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// originalStdin := os.Stdin
-
-	// defer func() {
-	// 	os.Stdin = originalStdin
-	// }()
-
-	// os.Stdin = r
-
+func getResult(args flags) []string {
 	resultChan := make(chan string)
-
-	go parseStrings(*args, resultChan)
-
-	// go func() {
-	// 	defer w.Close()
-	// 	w.WriteString("qwe\tqwe\nzxc\tzxc")
-	// }()
-
+	go parseStrings(args, resultChan)
 	var results []string
 	for result := range resultChan {
 		results = append(results, result)
 		fmt.Println(result)
 	}
-
+	return results
 }
 
 func parseStrings(args flags, resultChan chan string) {
@@ -80,10 +63,8 @@ func parseStrings(args flags, resultChan chan string) {
 
 		sbLen := sb.Len()
 		if sbLen > 0 && sb.String()[sbLen-1:sbLen] == args.d {
-			// fmt.Println(sb.String()[:sbLen-1])
 			resultChan <- sb.String()[:sbLen-1]
 		} else {
-			// fmt.Println(sb.String()[:sbLen])
 			resultChan <- sb.String()[:sbLen]
 		}
 		sb.Reset()
