@@ -24,17 +24,45 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	parseStrings(*args)
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	originalStdin := os.Stdin
+
+	defer func() {
+		os.Stdin = originalStdin
+	}()
+
+	os.Stdin = r
+
+	resultChan := make(chan string)
+
+	go parseStrings(*args, resultChan)
+
+	go func() {
+		defer w.Close()
+		w.WriteString("qwe\tqwe\nzxc\tzxc")
+	}()
+
+	var results []string
+	for result := range resultChan {
+		results = append(results, result)
+		fmt.Println(result)
+	}
+
 }
 
-func parseStrings(args flags) {
+func parseStrings(args flags, resultChan chan string) {
 	scanner := bufio.NewScanner(os.Stdin)
 	sb := strings.Builder{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		sepRes := strings.SplitAfter(line, args.d)
 
+		sepRes := strings.SplitAfter(line, args.d)
 		if len(sepRes) == 1 && args.s {
 			continue
 		}
@@ -49,14 +77,21 @@ func parseStrings(args flags) {
 			}
 		}
 
+		// sbLen := sb.Len()
+		// if sbLen > 0 && sb.String()[sbLen-1:sbLen] == args.d {
+		// 	fmt.Println(sb.String()[:sbLen-1])
+		// } else {
+		// 	fmt.Println(sb.String()[:sbLen])
+		// }
 		sbLen := sb.Len()
 		if sbLen > 0 && sb.String()[sbLen-1:sbLen] == args.d {
-			fmt.Println(sb.String()[:sbLen-1])
+			resultChan <- sb.String()[:sbLen-1]
 		} else {
-			fmt.Println(sb.String()[:sbLen])
+			resultChan <- sb.String()[:sbLen]
 		}
 		sb.Reset()
 	}
+	close(resultChan)
 }
 
 func parseFlags() (*flags, error) {
