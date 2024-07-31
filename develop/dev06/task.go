@@ -4,16 +4,14 @@ import (
 	"bufio"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 )
-
-type cutArgs struct {
-	args flags
-	path []string
-}
 
 type flags struct {
 	f []int
@@ -22,38 +20,57 @@ type flags struct {
 }
 
 func main() {
-	cA, err := parseFlags()
+	args, err := parseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
-	parseFiles(cA)
-
+	parseStrings(*args)
 }
 
-func parseFiles(cA *cutArgs) error {
-	str := make([][]string, len(cA.path))
-	for i, val := range cA.path {
-		file, err := os.Open(val)
-		if err != nil {
-			return err
+func parseStrings(args flags) {
+	scanner := bufio.NewScanner(os.Stdin)
+	sb := strings.Builder{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		sepRes := strings.SplitAfter(line, args.d)
+
+		if len(sepRes) == 1 && args.s {
+			continue
 		}
 
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			str[i] = append(str[i])
+		lenStr := len(sepRes)
+
+		for _, v := range args.f {
+			if v < lenStr {
+				sb.WriteString(sepRes[v])
+			} else {
+				break
+			}
 		}
+
+		sbLen := sb.Len()
+		if sbLen > 0 && sb.String()[sbLen-1:sbLen] == args.d {
+			fmt.Println(sb.String()[:sbLen-1])
+		} else {
+			fmt.Println(sb.String()[:sbLen])
+		}
+		sb.Reset()
 	}
-	return nil
 }
 
-func parseFlags() (*cutArgs, error) {
-	fFlag := flag.String("f", "", "выбрать поля (колонки)")
+func parseFlags() (*flags, error) {
+	fFlag := flag.String("f", "0", "выбрать поля (колонки)")
 	dFlag := flag.String("d", "\t", "использовать другой разделитель")
 	sFlag := flag.Bool("s", false, "только строки с разделителем")
 	flag.Parse()
 
-	if len(flag.Args()) < 2 {
-		return nil, errors.New("file not specified\nusage: ")
+	if len(flag.Args()) > 0 {
+		return nil, errors.New("usage: ./task -f list [-s] [-d delim]")
+	}
+
+	if *dFlag == "" || len(*dFlag) > 1 {
+		return nil, errors.New("bad delimiter")
 	}
 
 	numCols, err := searchReg(*fFlag)
@@ -61,57 +78,53 @@ func parseFlags() (*cutArgs, error) {
 		return nil, err
 	}
 
-	return &cutArgs{
-		args: flags{
-			f: numCols,
-			d: *dFlag,
-			s: *sFlag},
-		path: os.Args[1:],
-	}, nil
+	return &flags{
+		f: numCols,
+		d: *dFlag,
+		s: *sFlag}, nil
 }
 
 func searchReg(strReg string) ([]int, error) {
 	var result []int
 	seen := make(map[int]struct{})
 
-	// Проверка на допустимые символы (только цифры, запятые и дефисы)
 	if matched, _ := regexp.MatchString(`^[\d,-]+$`, strReg); !matched {
 		return nil, errors.New("invalid characters in input string")
 	}
 
-	// Регулярное выражение для обработки диапазонов и отдельных чисел
 	re := regexp.MustCompile(`(\d+)(?:-(\d+))?`)
 
-	// Находим все совпадения
 	matches := re.FindAllStringSubmatch(strReg, -1)
 
 	for _, match := range matches {
-		// Начальное значение диапазона или одиночное число
+
 		start, err := strconv.Atoi(match[1])
 		if err != nil {
 			return nil, err
 		}
 
 		if match[2] != "" {
-			// Если это диапазон
 			end, err := strconv.Atoi(match[2])
 			if err != nil {
 				return nil, err
 			}
-			// Добавляем все числа из диапазона
+
 			for i := start; i <= end; i++ {
 				if _, found := seen[i]; !found {
-					result = append(result, i)
+					result = append(result, i-1)
 					seen[i] = struct{}{}
 				}
 			}
 		} else {
-			// Если это одиночное число
 			if _, found := seen[start]; !found {
-				result = append(result, start)
+				result = append(result, start-1)
 				seen[start] = struct{}{}
 			}
 		}
+	}
+	sort.Ints(result)
+	if result[0] < 0 {
+		return nil, errors.New("column number cannot be less than 1")
 	}
 	return result, nil
 }
