@@ -51,6 +51,7 @@ func or(channels ...<-chan interface{}) <-chan interface{} {
 	go func(doneChan chan interface{}) {
 		wg.Wait()
 		close(doneChan)
+		fmt.Println("doneChan closed")
 	}(doneChan)
 
 	return doneChan
