@@ -1,0 +1,117 @@
+.page_educationConditions__zzBeh {
+    margin-top: 60px
+}
+
+.page_partners__ogQHo {
+    margin-top: 191px;
+    margin-bottom: 199px
+}
+
+.page_learn__MtXYr {
+    margin-top: 99px
+}
+
+.page_plan__O5cw1 {
+    z-index: 11 !important;
+    margin-top: 227px
+}
+
+.page_workingStudentCountFactoid__17_Ww {
+    z-index: 10 !important;
+    margin-top: 245px
+}
+
+.page_requirements__Jb5DG {
+    margin-top: 336px
+}
+
+.page_guide__4X2g3 {
+    margin-top: 301px
+}
+
+.page_teachers__Atwq9 {
+    margin-top: 326px !important
+}
+
+.page_studentPromoteFactoid__0wO4n {
+    margin-top: 238px
+}
+
+.page_faqGrid__XGrNO {
+    margin-top: 461px
+}
+
+.page_faqList__FCiRF {
+    margin-top: 15px
+}
+
+.page_studentPromoteFactoid__0wO4n+.page_faqList__FCiRF {
+    margin-top: 238px
+}
+
+.page_applicationButton__COne_ {
+    margin-top: 314px;
+    margin-bottom: 32%
+}
+
+.page_footer__eOjlp {
+    margin-top: 140px
+}
+
+@media screen and (max-width:599.9px) {
+    .page_educationConditions__zzBeh {
+        margin-top: 59px
+    }
+
+    .page_partners__ogQHo {
+        margin-top: 156px;
+        margin-bottom: 159px
+    }
+
+    .page_learn__MtXYr {
+        margin-top: 80px
+    }
+
+    .page_plan__O5cw1 {
+        margin-top: 125px
+    }
+
+    .page_workingStudentCountFactoid__17_Ww {
+        margin-top: 170px;
+        line-height: 85% !important;
+        letter-spacing: -1.8px !important
+    }
+
+    .page_requirements__Jb5DG {
+        margin-top: 196px
+    }
+
+    .page_guide__4X2g3 {
+        margin-top: 154px
+    }
+
+    .page_teachers__Atwq9 {
+        margin-top: 239px !important
+    }
+
+    .page_studentPromoteFactoid__0wO4n {
+        margin-top: 169px
+    }
+
+    .page_faqGrid__XGrNO {
+        margin-top: 258px
+    }
+
+    .page_faqList__FCiRF {
+        margin-top: 39px
+    }
+
+    .page_applicationButton__COne_ {
+        margin-top: 228px;
+        margin-bottom: 64%
+    }
+
+    .page_footer__eOjlp {
+        margin-top: 100px
+    }
+}
