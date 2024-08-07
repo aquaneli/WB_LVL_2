@@ -26,6 +26,7 @@ func main() {
 	}
 
 	err = downloadSite(node, baseUrl, siteName)
+	fmt.Println(err)
 	if err != nil {
 		log.Fatal(err)
 	}
