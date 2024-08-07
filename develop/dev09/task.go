@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 )
 
 func main() {
-	baseUrl := "https://dev.to/dave3130/golang-html-tokenizer-5fh7"
+	baseUrl := "https://ru.hexlet.io/courses/intro_to_git/lessons/commits-cancelation/theory_unit"
 	node, siteName, err := initDownloadFromHtml(baseUrl)
 	if err != nil {
 		log.Fatal(err)
@@ -66,11 +65,11 @@ func initDownloadFromHtml(baseUrl string) (*html.Node, string, error) {
 // обработка всех узлов html страницы рекурсивно
 func downloadSite(node *html.Node, baseUrl, siteName string) error {
 
-	// if node.Type == html.ElementNode && node.Data == "style" {
-	// 	if node.FirstChild != nil && node.FirstChild.Type == html.TextNode {
-	// 		processStyle(node.FirstChild, baseUrl, siteName)
-	// 	}
-	// }
+	if node.Type == html.ElementNode && node.Data == "style" {
+		if node.FirstChild != nil && node.FirstChild.Type == html.TextNode {
+			processStyle(node.FirstChild, baseUrl, siteName)
+		}
+	}
 
 	if node.Type == html.ElementNode {
 		err := processNode(node, baseUrl, siteName)
@@ -90,7 +89,7 @@ func downloadSite(node *html.Node, baseUrl, siteName string) error {
 
 func processStyle(node *html.Node, baseUrl, siteName string) error {
 	attr := strings.Split(node.Data, " ")
-	fmt.Println(attr)
+
 	for _, v := range attr {
 		if len(v) > 3 && v[:3] == "url" {
 			url := strings.Split(v[3:], "\"")
@@ -118,19 +117,8 @@ func processNode(node *html.Node, baseUrl, siteName string) error {
 		if err != nil {
 			return err
 		}
-	} else if node.Data == "div" {
-		for _, v := range node.Attr {
-			if v.Key == "style" {
-				res := strings.Split(v.Val, ":")
-				if len(res) > 1 {
-					if res[1][:3] == "url" {
-						processStyle(&html.Node{Data: res[1]}, baseUrl, siteName)
-					}
-
-				}
-			}
-		}
 	}
+
 	return nil
 }
 
@@ -148,6 +136,7 @@ func processAttr(node *html.Node, baseUrl, siteName, key string) error {
 
 // создаем директории и сохраняем туда данные
 func downloadMaterial(siteName, baseUrl, val string) error {
+	//изменить данные когда есть http и когда просто путь
 	resp, err := http.Get(concatStrings(baseUrl, val[1:]))
 	if err != nil {
 		return err
