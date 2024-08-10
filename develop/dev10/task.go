@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -19,12 +20,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	sig := make(chan error)
-	go WriteData(conn, sig)
-	go ReadData(conn, sig)
+	go WriteData(conn, sig, &wg)
+	go ReadData(conn, sig, &wg)
 
-	time.Sleep(time.Second * 10)
-
+	wg.Wait()
 }
 
 func flags() (*time.Duration, string) {
@@ -40,12 +43,11 @@ func flags() (*time.Duration, string) {
 	return d, socket
 }
 
-func WriteData(c net.Conn, sig chan error) {
+func WriteData(c net.Conn, sig chan error, wg *sync.WaitGroup) {
 	go func() {
 		if _, ok := <-sig; !ok {
 			os.Stdin.Close()
-			fmt.Println("WriteData finished 2")
-			fmt.Scanf("\n")
+			fmt.Println("connection interrupted\npress Enter to end the program")
 		}
 	}()
 
@@ -56,26 +58,27 @@ loop:
 		if err != nil {
 			if err == io.EOF {
 				fmt.Println("WriteData finished 1")
-				c.Close()
+				defer c.Close()
 				break loop
 			}
 			if errors.Unwrap(err) == os.ErrClosed {
 				fmt.Println("WriteData finished 2")
+				defer c.Close()
 				break loop
 			}
 			log.Fatal(err)
 		}
 		c.Write(b)
 	}
+	wg.Done()
 }
 
-func ReadData(c net.Conn, sig chan error) {
+func ReadData(c net.Conn, sig chan error, wg *sync.WaitGroup) {
 	r := bufio.NewReader(c)
 loop:
 	for {
 		b, err := r.ReadBytes('\n')
 		if err != nil {
-
 			if err == io.EOF {
 				fmt.Println("ReadData finished 1")
 				close(sig)
@@ -91,4 +94,5 @@ loop:
 		}
 		os.Stdout.Write(b)
 	}
+	wg.Done()
 }
