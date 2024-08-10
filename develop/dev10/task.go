@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,8 +9,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -22,21 +19,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	defer close(sigChan)
+	sig := make(chan error)
+	go WriteData(conn, sig)
+	go ReadData(conn, sig)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go WriteData(conn, ctx, sigChan)
-	go ReadData(conn, ctx, sigChan)
-
-	select {
-	case <-sigChan:
-		cancel()
-	}
-
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 10)
 
 }
 
@@ -53,48 +40,55 @@ func flags() (*time.Duration, string) {
 	return d, socket
 }
 
-func WriteData(c net.Conn, ctx context.Context, sigChan chan os.Signal) {
+func WriteData(c net.Conn, sig chan error) {
+	go func() {
+		if _, ok := <-sig; !ok {
+			os.Stdin.Close()
+			fmt.Println("WriteData finished 2")
+			fmt.Scanf("\n")
+		}
+	}()
+
 	r := bufio.NewReader(os.Stdin)
 loop:
 	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("WriteData finished")
-			break loop
-		default:
-			b, err := r.ReadBytes('\n')
-			if err != nil {
-				if err == io.EOF {
-					fmt.Println("WriteData finished")
-					c.Close()
-					break loop
-				}
-				log.Fatal(err)
+		b, err := r.ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("WriteData finished 1")
+				c.Close()
+				break loop
 			}
-			c.Write(b)
+			if errors.Unwrap(err) == os.ErrClosed {
+				fmt.Println("WriteData finished 2")
+				break loop
+			}
+			log.Fatal(err)
 		}
+		c.Write(b)
 	}
 }
 
-func ReadData(c net.Conn, ctx context.Context, sigChan chan os.Signal) {
+func ReadData(c net.Conn, sig chan error) {
 	r := bufio.NewReader(c)
 loop:
 	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("ReadData finished")
-			break loop
-		default:
-			b, err := r.ReadBytes('\n')
-			if err != nil {
-				if errors.Unwrap(err) == net.ErrClosed {
-					fmt.Println("ReadData finished")
-					break loop
-				}
-				log.Fatal(err)
-			}
-			os.Stdout.Write(b)
-		}
+		b, err := r.ReadBytes('\n')
+		if err != nil {
 
+			if err == io.EOF {
+				fmt.Println("ReadData finished 1")
+				close(sig)
+				break loop
+			}
+
+			if errors.Unwrap(err) == net.ErrClosed {
+				fmt.Println("ReadData finished 2")
+				break loop
+			}
+
+			log.Fatal(err)
+		}
+		os.Stdout.Write(b)
 	}
 }
