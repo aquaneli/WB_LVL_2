@@ -35,6 +35,8 @@ func TestWrite(t *testing.T) {
 	go func() {
 		defer w.Close()
 		w.WriteString("qwe\n")
+		w.WriteString("privet\n")
+		w.WriteString("good job\n")
 		w.WriteString("stop\n")
 	}()
 
@@ -42,7 +44,7 @@ func TestWrite(t *testing.T) {
 	wg.Wait()
 
 	time.Sleep(time.Second * 1)
-	expect := []string{"qwe\n"}
+	expect := []string{"qwe\n", "privet\n", "good job\n"}
 	i := 0
 	for v := range str {
 		if !reflect.DeepEqual(string(v), expect[i]) {
