@@ -2,58 +2,77 @@ package main
 
 import (
 	"bufio"
-	"io"
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestWrite(t *testing.T) {
-	res := []string{}
+	str := make(chan []byte)
 	go func() {
-		res = newServer()
+		newServerWrite(str)
 	}()
 
 	conn, err := net.DialTimeout("tcp", "localhost:8080", time.Second*10)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer conn.Close()
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	sig := make(chan error)
 
-	r, w := io.Pipe()
+	r, w, _ := os.Pipe()
+	oldStdin := os.Stdin
+	defer func() { os.Stdin = oldStdin }()
 	os.Stdin = r
 
-	WriteData(conn, sig, &wg)
+	go func() {
+		defer w.Close()
+		w.WriteString("qwe\n")
+		w.WriteString("stop\n")
+	}()
 
+	go WriteData(conn, sig, &wg)
 	wg.Wait()
 
+	time.Sleep(time.Second * 1)
+	expect := []string{"qwe\n"}
+	i := 0
+	for v := range str {
+		if !reflect.DeepEqual(string(v), expect[i]) {
+			t.Errorf("expected %q but got %q", expect, string(v))
+		}
+		i++
+	}
+	time.Sleep(time.Second * 1)
+	close(sig)
 }
 
-func newServer() []string {
+func newServerWrite(str chan []byte) {
 	addr, _ := net.ResolveTCPAddr("tcp", ":8080")
 	ln, _ := net.ListenTCP("tcp", addr)
-	res := []string{}
 	defer ln.Close()
 
 	for {
-
-		conn, _ := ln.Accept()
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println("Error accepting connection:", err)
+			continue
+		}
 		r := bufio.NewReader(conn)
-
 		for {
 			b, _ := r.ReadBytes('\n')
-			if string(b) == "stop" {
-				return res
+			if string(b) == "stop\n" {
+				close(str)
+				return
 			}
-			// fmt.Println(string(b))
-			res = append(res, string(b))
+			str <- b
 		}
-
 	}
-
 }
