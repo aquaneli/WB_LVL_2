@@ -18,7 +18,6 @@ func main() {
 func unixShellUtil() {
 	bs := bufio.NewScanner(os.Stdin)
 	for {
-
 		currentDir, err := os.Getwd()
 		if err != nil {
 			log.Fatalln(err)
@@ -27,26 +26,30 @@ func unixShellUtil() {
 		fmt.Printf("util$ %s %c ", dir[len(dir)-1], '%')
 
 		if bs.Scan() {
-			cmd := strings.Split(bs.Text(), " ")
-			switch cmd[0] {
-			case "cd":
-				cd(cmd)
-			case "pwd":
-				pwd()
-			case "echo":
-				echo(cmd)
-			case "kill":
-				kill(cmd)
-			case "ps":
-				ps()
-			case "fork":
-				fork(cmd)
-			case "exit":
-				return
-			default:
-				fmt.Printf("command not found: %s\n", cmd[0])
+			cmdAll := strings.Split(bs.Text(), "|")
+
+			for _, str := range cmdAll {
+				cmd := strings.Fields(str)
+				switch cmd[0] {
+				case "cd":
+					cd(cmd)
+				case "pwd":
+					pwd()
+				case "echo":
+					echo(cmd)
+				case "kill":
+					kill(cmd)
+				case "ps":
+					ps()
+				case "exit":
+					return
+				default:
+					fmt.Printf("command not found: %s\n", cmd[0])
+				}
 			}
 
+		} else {
+			break
 		}
 
 	}
@@ -109,7 +112,13 @@ func kill(cmd []string) {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
-			proc.Kill()
+			err = proc.Kill()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
+
+			fmt.Println("Process killed")
 		}
 
 	}
@@ -131,8 +140,4 @@ func ps() {
 
 		fmt.Printf("%3d\t%s\t\n", p.Pid, name)
 	}
-}
-
-func fork(cmd []string) {
-
 }
