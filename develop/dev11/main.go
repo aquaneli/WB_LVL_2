@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -19,7 +18,10 @@ func main() {
 
 	http.HandleFunc("/events_for_day", HandlerEventsForDay)
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func HandlerEventsForDay(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +43,7 @@ func HandlerCreateEvent(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(resMarshal))
 	} else {
 		//парсинг GET запросов
+
 		// for key, val := range r.URL.Query() {
 		// 	fmt.Println(key, val)
 		// }
@@ -54,13 +57,15 @@ func HandlerCreateEvent(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("finish")
 
 		//парсинг POST запроса
-		r.ParseForm()
-		for key, val := range r.Form {
-			for _, value := range val {
-				fmt.Fprintf(w, "Key: %s, Value: %s\n", key, value)
+		// r.ParseForm()
+		// for key, val := range r.Form {
 
-			}
-		}
+		// }
+
+		// for k, v := range c.Items(){
+		// 	fmt.Println(k, v.Object)
+		// }
+
 	}
 
 }
