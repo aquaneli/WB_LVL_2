@@ -40,7 +40,7 @@ func (s *Storage) AddEvent(UserIdKey, DateVal string) error {
 
 	//если такой даты-ключа не существует
 	if _, ok := s.Items[id][DateVal]; !ok {
-		s.Items[id][DateVal] = events{uniqCodeEvents: make([]string, 0, 1), date: dateParse}
+		s.Items[id][DateVal] = events{uniqCodeEvents: make(map[string]struct{}), date: dateParse}
 	}
 
 	(*s).Items[id][DateVal].uniqCodeEvents[getUniqCode()] = struct{}{}
@@ -77,10 +77,21 @@ func (s *Storage) UpdateEvent(UserIdKey, DateValReplace, CodeEvent string) error
 		return errors.New("пользователя не существует")
 	}
 
-	for key, _ := range (*s).Items[id] {
-		if _, ok := (*s).Items[id][key].uniqCodeEvents[CodeEvent]; ok{
-
+	var ok bool
+	for key := range (*s).Items[id] {
+		_, ok = (*s).Items[id][key].uniqCodeEvents[CodeEvent]
+		if ok {
+			if _, okReplace := (*s).Items[id][DateValReplace]; !okReplace {
+				(*s).Items[id][DateValReplace] = events{uniqCodeEvents: make(map[string]struct{}), date: dateParse}
+			}
+			(*s).Items[id][DateValReplace].uniqCodeEvents[CodeEvent] = struct{}{}
+			delete((*s).Items[id][key].uniqCodeEvents, CodeEvent)
+			break
 		}
+	}
+
+	if !ok {
+		return errors.New("такого евента не существует")
 	}
 
 	return nil
