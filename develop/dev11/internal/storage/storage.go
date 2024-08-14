@@ -1,103 +1,114 @@
 package storage
 
 import (
+	"crypto/rand"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
 )
 
 type Storage struct {
-	Items map[string]map[string]time.Time
+	Items map[int]map[string]events
+}
+
+type events struct {
+	uniqCodeEvents map[string]struct{}
+	date           time.Time
 }
 
 func NewStorge() *Storage {
-	return &Storage{Items: make(map[string]map[string]time.Time)}
+	return &Storage{Items: make(map[int]map[string]events)}
 }
 
-func (m *Storage) AddEvent(UserIdKey, DateVal string) {
-	date, err := checkingIdAndData(UserIdKey, DateVal, "2010-10-10")
+func (s *Storage) AddEvent(UserIdKey, DateVal string) error {
+	id, err := strconv.Atoi(UserIdKey)
+	if err != nil {
+		return errors.New("некорректный id, введите целое число")
+	}
+
+	dateParse, err := time.Parse("2010-10-25", DateVal)
+	if err != nil {
+		return errors.New("некорректная дата, введите в формате yyyy-mm-dd")
+	}
+
+	//если пользовтеля не существует
+	if _, ok := (*s).Items[id]; !ok {
+		(*s).Items[id] = make(map[string]events)
+	}
+
+	//если такой даты-ключа не существует
+	if _, ok := s.Items[id][DateVal]; !ok {
+		s.Items[id][DateVal] = events{uniqCodeEvents: make([]string, 0, 1), date: dateParse}
+	}
+
+	(*s).Items[id][DateVal].uniqCodeEvents[getUniqCode()] = struct{}{}
+
+	return nil
+
+}
+
+func getUniqCode() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if _, ok := (*m).Items[UserIdKey]; !ok {
-		(*m).Items[UserIdKey] = make(map[string]time.Time)
-		(*m).Items[UserIdKey][DateVal] = date
-		return
-	}
+	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 
-	if _, ok := (*m).Items[UserIdKey][DateVal]; !ok {
-		(*m).Items[UserIdKey][DateVal] = date
-		return
-	} else {
-		log.Fatal(errors.New("эта дата уже занята"))
-	}
+	return uuid
 }
 
-func (m *Storage) UpdateEvent(UserIdKey, DateVal, DataReplace string) {
-	_, err := checkingIdAndData(UserIdKey, DateVal, "2010-10-10")
+func (s *Storage) UpdateEvent(UserIdKey, DateValReplace, CodeEvent string) error {
+	id, err := strconv.Atoi(UserIdKey)
 	if err != nil {
-		log.Fatal(err)
+		return errors.New("некорректный id, введите целое число")
 	}
 
-	newDate, err := time.Parse("2010-10-10", DataReplace)
+	dateParse, err := time.Parse("2010-10-25", DateValReplace)
 	if err != nil {
-		log.Fatal(errors.New("некорректная дата, введите в формате yyyy-mm-dd"))
+		return errors.New("некорректная дата, введите в формате yyyy-mm-dd")
 	}
 
-	if _, ok := (*m).Items[UserIdKey]; !ok {
-		log.Fatal(errors.New("такого пользователя не существует"))
+	if _, ok := (*s).Items[id]; !ok {
+		return errors.New("пользователя не существует")
 	}
 
-	if _, ok := (*m).Items[UserIdKey][DateVal]; !ok {
-		log.Fatal(errors.New("нельзя заменить эту дату, потому что она не добавлена"))
+	for key, _ := range (*s).Items[id] {
+		if _, ok := (*s).Items[id][key].uniqCodeEvents[CodeEvent]; ok{
+
+		}
 	}
 
-	if _, ok := (*m).Items[UserIdKey][DataReplace]; ok {
-		log.Fatal(errors.New("нельзя заменить текущую дату на эту, потому что она уже добавлена"))
-	}
-
-	delete((*m).Items[UserIdKey], DateVal)
-	(*m).Items[UserIdKey][DataReplace] = newDate
+	return nil
 }
 
-func (m *Storage) DeleteEvent(UserIdKey, DateVal string) {
-	_, err := checkingIdAndData(UserIdKey, DateVal, "2010-10-10")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, ok := (*m).Items[UserIdKey]; !ok {
-		log.Fatal(errors.New("такого пользователя не существует"))
-	}
+// func (m *Storage) DeleteEvent(UserIdKey, DateVal string) {
+// 	_, err := checkingIdAndData(UserIdKey, DateVal, "2010-10-10")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if _, ok := (*m).Items[UserIdKey]; !ok {
+// 		log.Fatal(errors.New("такого пользователя не существует"))
+// 	}
 
-	if _, ok := (*m).Items[UserIdKey][DateVal]; !ok {
-		log.Fatal(errors.New("нельзя удалить эту дату, потому что она не добавлена"))
-	}
-	delete((*m).Items[UserIdKey], DateVal)
-}
+// 	if _, ok := (*m).Items[UserIdKey][DateVal]; !ok {
+// 		log.Fatal(errors.New("нельзя удалить эту дату, потому что она не добавлена"))
+// 	}
+// 	delete((*m).Items[UserIdKey], DateVal)
+// }
 
-func checkingIdAndData(UserIdKey, DateVal, Template string) (time.Time, error) {
-	if _, err := strconv.Atoi(UserIdKey); err != nil {
-		return time.Time{}, errors.New("некорректный id, введите целое число")
-	}
+// func (m *Storage) GetEventsForDay(UserIdKey string, Day string) {
+// 	_, err := checkingIdAndData(UserIdKey, Day, "10")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	t, err := time.Parse(Template, DateVal)
-	if err != nil {
-		return time.Time{}, errors.New("некорректная дата, введите в формате yyyy-mm-dd")
-	}
+// 	if _, ok := (*m).Items[UserIdKey]; !ok {
+// 		log.Fatal(errors.New("такого пользователя не существует"))
+// 	}
 
-	return t, nil
-}
-
-func (m *Storage) GetEventsForDay(UserIdKey string, Day string) {
-	_, err := checkingIdAndData(UserIdKey, Day, "10")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, ok := (*m).Items[UserIdKey]; !ok {
-		log.Fatal(errors.New("такого пользователя не существует"))
-	}
-
-}
+// }
