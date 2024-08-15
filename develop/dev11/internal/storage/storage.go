@@ -14,8 +14,8 @@ type Storage struct {
 }
 
 type events struct {
-	uniqCodeEvents map[string]struct{}
-	date           time.Time
+	UniqCodeEvents map[string]struct{}
+	Date           time.Time
 }
 
 func NewStorge() *Storage {
@@ -35,15 +35,15 @@ func getUniqCode() string {
 	return uuid
 }
 
-func (s *Storage) Add(UserIdKey, DateVal string) error {
+func (s *Storage) Add(UserIdKey, DateVal string) (string, error) {
 	id, err := strconv.Atoi(UserIdKey)
 	if err != nil {
-		return errors.New("некорректный id, введите целое число")
+		return "", errors.New("некорректный id, введите целое число")
 	}
 
-	dateParse, err := time.Parse("2006-01-02", DateVal)
+	DateParse, err := time.Parse("2006-01-02", DateVal)
 	if err != nil {
-		return errors.New("некорректная дата, введите в формате yyyy-mm-dd")
+		return "", errors.New("некорректная дата, введите в формате yyyy-mm-dd")
 	}
 
 	//если пользовтеля не существует
@@ -53,22 +53,22 @@ func (s *Storage) Add(UserIdKey, DateVal string) error {
 
 	//если такой даты-ключа не существует
 	if _, ok := s.Items[id][DateVal]; !ok {
-		s.Items[id][DateVal] = events{uniqCodeEvents: make(map[string]struct{}), date: dateParse}
+		s.Items[id][DateVal] = events{UniqCodeEvents: make(map[string]struct{}), Date: DateParse}
 	}
+	uuid := getUniqCode()
+	(*s).Items[id][DateVal].UniqCodeEvents[uuid] = struct{}{}
 
-	(*s).Items[id][DateVal].uniqCodeEvents[getUniqCode()] = struct{}{}
-
-	return nil
+	return uuid, nil
 
 }
 
-func (s *Storage) Update(UserIdKey, DateValReplace, CodeEvent string) error {
+func (s *Storage) UpDate(UserIdKey, DateValReplace, CodeEvent string) error {
 	id, err := strconv.Atoi(UserIdKey)
 	if err != nil {
 		return errors.New("некорректный id, введите целое число")
 	}
 
-	dateParse, err := time.Parse("2006-01-02", DateValReplace)
+	DateParse, err := time.Parse("2006-01-02", DateValReplace)
 	if err != nil {
 		return errors.New("некорректная дата, введите в формате yyyy-mm-dd")
 	}
@@ -79,13 +79,13 @@ func (s *Storage) Update(UserIdKey, DateValReplace, CodeEvent string) error {
 
 	var ok bool
 	for key := range (*s).Items[id] {
-		_, ok = (*s).Items[id][key].uniqCodeEvents[CodeEvent]
+		_, ok = (*s).Items[id][key].UniqCodeEvents[CodeEvent]
 		if ok {
 			if _, okReplace := (*s).Items[id][DateValReplace]; !okReplace {
-				(*s).Items[id][DateValReplace] = events{uniqCodeEvents: make(map[string]struct{}), date: dateParse}
+				(*s).Items[id][DateValReplace] = events{UniqCodeEvents: make(map[string]struct{}), Date: DateParse}
 			}
-			(*s).Items[id][DateValReplace].uniqCodeEvents[CodeEvent] = struct{}{}
-			delete((*s).Items[id][key].uniqCodeEvents, CodeEvent)
+			(*s).Items[id][DateValReplace].UniqCodeEvents[CodeEvent] = struct{}{}
+			delete((*s).Items[id][key].UniqCodeEvents, CodeEvent)
 			break
 		}
 	}
@@ -116,11 +116,11 @@ func (s *Storage) Remove(UserIdKey, DateVal, CodeEvent string) error {
 		return errors.New("на эту дату эвентов нет")
 	}
 
-	if _, ok := s.Items[id][DateVal].uniqCodeEvents[CodeEvent]; !ok {
+	if _, ok := s.Items[id][DateVal].UniqCodeEvents[CodeEvent]; !ok {
 		return errors.New("такого эвента не существет")
 	}
 
-	delete(s.Items[id][DateVal].uniqCodeEvents, CodeEvent)
+	delete(s.Items[id][DateVal].UniqCodeEvents, CodeEvent)
 
 	return nil
 }
@@ -165,9 +165,11 @@ func (s *Storage) GetEventsForWeek(UserIdKey string, DateVal string) (*[]events,
 	}
 
 	eventsForWeek := []events{}
-	for dateStr, event := range s.Items[id] {
-		date, err := time.Parse("2006-01-02", dateStr)
-		if err == nil && date.After(startDate) && date.Before(startDate.AddDate(0, 0, 7)) {
+
+	for _, event := range s.Items[id] {
+
+		if (event.Date.Equal(startDate) || event.Date.After(startDate)) &&
+			(event.Date.Before(startDate.AddDate(0, 0, 6)) || event.Date.Equal(startDate.AddDate(0, 0, 6))) {
 			eventsForWeek = append(eventsForWeek, event)
 		}
 	}
@@ -195,15 +197,14 @@ func (s *Storage) GetEventsForYear(UserIdKey string, DateVal string) (*[]events,
 	}
 
 	eventsForYear := []events{}
-	for dateStr, event := range s.Items[id] {
-		// Парсим дату и проверяем год
-		date, err := time.Parse("2006-01-02", dateStr)
-		if err == nil && date.Year() == startDate.Year() {
+	for _, event := range s.Items[id] {
+
+		if (event.Date.Equal(startDate) || event.Date.After(startDate)) && (event.Date.Before(startDate.AddDate(1, 0, 0)) || event.Date.Equal(startDate.AddDate(1, 0, 0))) {
 			eventsForYear = append(eventsForYear, event)
 		}
+
 	}
 
-	// Если нет событий за этот год
 	if len(eventsForYear) == 0 {
 		return nil, errors.New("за этот год нет событий")
 	}
