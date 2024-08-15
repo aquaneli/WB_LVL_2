@@ -1,13 +1,20 @@
 package main
 
 import (
+	"dev11/config"
 	"dev11/internal/server/handlers"
 	"dev11/internal/server/middleware"
+	"fmt"
 	"log"
 	"net/http"
 )
 
 func main() {
+
+	cfg, err := config.ReadConfig("../config/config.yaml")
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	eh := handlers.NewEventHandler()
 
@@ -19,7 +26,9 @@ func main() {
 	http.HandleFunc("/events_for_week", middleware.Logging(eh.HandlerEventsForWeek))
 	http.HandleFunc("/events_for_year", middleware.Logging(eh.HandlerEventsForYear))
 
-	err := http.ListenAndServe(":8080", nil)
+	address := fmt.Sprintf("%s:%s", cfg.Server.IP, cfg.Server.Port)
+
+	err = http.ListenAndServe(address, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -28,7 +28,6 @@ func ObjectSerialization(w http.ResponseWriter, msg interface{}) {
 		log.Fatalln(err)
 	}
 
-	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(res)
 	if err != nil {
 		log.Fatalln(err)

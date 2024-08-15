@@ -34,6 +34,8 @@ func (eh *EventHandlers) HandlerCreateEvent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event added"}})
 }
 
@@ -59,6 +61,8 @@ func (eh *EventHandlers) HandlerUpdateEvent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event date updated"}})
 
 }
@@ -85,6 +89,8 @@ func (eh *EventHandlers) HandlerDeleteEvent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event deleted"}})
 }
 
@@ -146,6 +152,8 @@ func (eh *EventHandlers) HandlerEventsForWeek(w http.ResponseWriter, r *http.Req
 			uuid = append(uuid, key)
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
 }
 
@@ -174,5 +182,7 @@ func (eh *EventHandlers) HandlerEventsForYear(w http.ResponseWriter, r *http.Req
 			uuid = append(uuid, key)
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
 }

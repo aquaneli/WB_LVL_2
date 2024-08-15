@@ -97,6 +97,10 @@ func (s *Storage) Remove(UserIdKey, DateVal, CodeEvent string) int {
 
 	delete(s.Items[id][DateVal].UniqCodeEvents, CodeEvent)
 
+	if len(s.Items[id][DateVal].UniqCodeEvents) == 0 {
+		delete(s.Items[id], DateVal)
+	}
+
 	return http.StatusOK
 }
 
