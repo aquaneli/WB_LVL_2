@@ -1,7 +1,8 @@
-package serialaze
+package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -16,13 +17,20 @@ type Information struct {
 	Status  string   `json:"status"`
 }
 
-func ObjectSerialization(w http.ResponseWriter, msg ResponseResult) error {
+type Err struct {
+	Result string `json:"error"`
+}
+
+func ObjectSerialization(w http.ResponseWriter, msg interface{}) {
 	res, err := json.Marshal(msg)
 	if err != nil {
-		return err
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-	return nil
+	_, err = w.Write(res)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
