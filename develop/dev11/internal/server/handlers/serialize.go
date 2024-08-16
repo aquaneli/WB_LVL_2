@@ -21,13 +21,14 @@ type Err struct {
 	Result string `json:"error"`
 }
 
-func ObjectSerialization(w http.ResponseWriter, msg interface{}) {
+func ObjectSerialization(w http.ResponseWriter, status int, msg interface{}) {
 	res, err := json.Marshal(msg)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	_, err = w.Write(res)
 	if err != nil {
 		log.Fatalln(err)

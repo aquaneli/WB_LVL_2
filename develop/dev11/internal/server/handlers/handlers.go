@@ -16,13 +16,13 @@ func NewEventHandler() *EventHandlers {
 
 func (eh *EventHandlers) HandlerCreateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 	}
 
 	id := r.FormValue("user_id")
@@ -30,24 +30,22 @@ func (eh *EventHandlers) HandlerCreateEvent(w http.ResponseWriter, r *http.Reque
 
 	uuid, status := eh.s.Add(id, date)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event added"}})
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event added"}})
 }
 
 func (eh *EventHandlers) HandlerUpdateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 		return
 	}
 
@@ -57,25 +55,22 @@ func (eh *EventHandlers) HandlerUpdateEvent(w http.ResponseWriter, r *http.Reque
 
 	status := eh.s.UpDate(id, date, uuid)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event date updated"}})
-
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event date updated"}})
 }
 
 func (eh *EventHandlers) HandlerDeleteEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 		return
 	}
 
@@ -85,24 +80,22 @@ func (eh *EventHandlers) HandlerDeleteEvent(w http.ResponseWriter, r *http.Reque
 
 	status := eh.s.Remove(id, date, uuid)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event deleted"}})
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: []string{uuid}, Status: "event deleted"}})
 }
 
 func (eh *EventHandlers) HandlerEventsForDay(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 		return
 	}
 
@@ -111,7 +104,7 @@ func (eh *EventHandlers) HandlerEventsForDay(w http.ResponseWriter, r *http.Requ
 
 	e, status := eh.s.GetEventsForDay(id, date)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
@@ -121,20 +114,19 @@ func (eh *EventHandlers) HandlerEventsForDay(w http.ResponseWriter, r *http.Requ
 	for k := range e.UniqCodeEvents {
 		uuid = append(uuid, k)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
+
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
 }
 
 func (eh *EventHandlers) HandlerEventsForWeek(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 		return
 	}
 	id := r.FormValue("user_id")
@@ -142,7 +134,7 @@ func (eh *EventHandlers) HandlerEventsForWeek(w http.ResponseWriter, r *http.Req
 
 	e, status := eh.s.GetEventsForWeek(id, date)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
@@ -152,19 +144,18 @@ func (eh *EventHandlers) HandlerEventsForWeek(w http.ResponseWriter, r *http.Req
 			uuid = append(uuid, key)
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
+
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
 }
 
 func (eh *EventHandlers) HandlerEventsForYear(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
+		ObjectSerialization(w, http.StatusBadRequest, Err{Result: "HTTP " + strconv.Itoa(http.StatusBadRequest)})
 		return
 	}
 	err := r.ParseForm()
 	if err != nil {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
+		ObjectSerialization(w, http.StatusInternalServerError, Err{Result: "HTTP " + strconv.Itoa(http.StatusInternalServerError)})
 		return
 	}
 	id := r.FormValue("user_id")
@@ -172,7 +163,7 @@ func (eh *EventHandlers) HandlerEventsForYear(w http.ResponseWriter, r *http.Req
 
 	e, status := eh.s.GetEventsForYear(id, date)
 	if status != http.StatusOK {
-		ObjectSerialization(w, Err{Result: "HTTP " + strconv.Itoa(status)})
+		ObjectSerialization(w, status, Err{Result: "HTTP " + strconv.Itoa(status)})
 		return
 	}
 
@@ -182,7 +173,6 @@ func (eh *EventHandlers) HandlerEventsForYear(w http.ResponseWriter, r *http.Req
 			uuid = append(uuid, key)
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	ObjectSerialization(w, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
+
+	ObjectSerialization(w, http.StatusOK, ResponseResult{Info: Information{UserId: id, Date: date, EventId: uuid, Status: "successfully"}})
 }

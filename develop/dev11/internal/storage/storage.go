@@ -180,6 +180,10 @@ func BadRequest(UserIdKey, DateVal string) (int, time.Time, int) {
 		return 0, time.Time{}, http.StatusBadRequest
 	}
 
+	if id <= 0 {
+		return 0, time.Time{}, http.StatusBadRequest
+	}
+
 	dateParse, err := time.Parse("2006-01-02", DateVal)
 	if err != nil {
 		return 0, time.Time{}, http.StatusBadRequest
