@@ -1,5 +1,23 @@
 package main
 
+/*
+=== Утилита grep ===
+
+Реализовать утилиту фильтрации (man grep)
+
+Поддержать флаги:
+-A - "after" печатать +N строк после совпадения
+-B - "before" печатать +N строк до совпадения
+-C - "context" (A+B) печатать ±N строк вокруг совпадения
+-c - "count" (количество строк)
+-i - "ignore-case" (игнорировать регистр)
+-v - "invert" (вместо совпадения, исключать)
+-F - "fixed", точное совпадение со строкой, не паттерн
+-n - "line num", печатать номер строки
+
+Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
+*/
+
 import (
 	"bufio"
 	"errors"
@@ -78,6 +96,7 @@ func parseFlags() (flags, error) {
 	}, nil
 }
 
+// Вывод всех результирующих строк строк
 func printBuff(resBuff, indexBuffReserve [][]int, buffStr [][]string, args flags) {
 
 	if !args.c {
@@ -104,6 +123,7 @@ func printBuff(resBuff, indexBuffReserve [][]int, buffStr [][]string, args flags
 	}
 }
 
+// Вывод когда файлов много
 func printManyFiles(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i int, count *int) {
 	if !args.n {
 		if *count < len(indexBuffReserve[i]) && v == indexBuffReserve[i][*count] {
@@ -122,6 +142,7 @@ func printManyFiles(indexBuffReserve [][]int, buffStr [][]string, args flags, v,
 	}
 }
 
+// Вывод когда файл один
 func printOneFile(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i int, count *int) {
 	if !args.n {
 		fmt.Printf("%s\n", buffStr[i][v])
@@ -135,6 +156,7 @@ func printOneFile(indexBuffReserve [][]int, buffStr [][]string, args flags, v, i
 	}
 }
 
+// Вывод флага -c
 func printFilesFlagC(indexBuffReserve [][]int, args flags) {
 	for i, v := range indexBuffReserve {
 		if len(indexBuffReserve) > 1 {
@@ -146,6 +168,7 @@ func printFilesFlagC(indexBuffReserve [][]int, args flags) {
 	}
 }
 
+// Парсинг файлов
 func parseFile(args flags) ([][]int, [][]int, [][]string) {
 	buff := make([][]int, len(args.pathFile))
 	buffStr := make([][]string, len(args.pathFile))
@@ -191,6 +214,7 @@ func parseFile(args flags) ([][]int, [][]int, [][]string) {
 	return buff, indexBuff, buffStr
 }
 
+// Обработка строк
 func process(buff [][]int, indexBuff [][]int, args flags) [][]int {
 
 	if args.C > 0 {
