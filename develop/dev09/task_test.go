@@ -5,13 +5,13 @@ import (
 )
 
 func Test(t *testing.T) {
-	baseUrl := "https://tech.wildberries.ru/"
-	node, siteName, err := initDownloadFromHtml(baseUrl)
+	baseURL := "https://tech.wildberries.ru/"
+	node, siteName, err := initDownloadFromHTML(baseURL)
 	if err != nil {
 		t.Error("Incorrect parsing")
 	}
 
-	err = downloadSite(node, baseUrl, siteName)
+	err = downloadSite(node, baseURL, siteName)
 	if err != nil {
 		t.Error("incorrect processing of download links")
 	}
@@ -19,8 +19,8 @@ func Test(t *testing.T) {
 }
 
 func TestProcessNode(t *testing.T) {
-	url, baseUrl, err := initDownloadFromHtml("https://exampleqwe.com")
-	if url != nil || baseUrl != "" || err == nil {
+	url, baseURL, err := initDownloadFromHTML("https://exampleqwe.com")
+	if url != nil || baseURL != "" || err == nil {
 		t.Error("Incorrect parsing")
 	}
 }
