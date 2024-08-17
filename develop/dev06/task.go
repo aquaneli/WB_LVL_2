@@ -1,5 +1,18 @@
 package main
 
+/*
+=== Утилита cut ===
+
+Принимает STDIN, разбивает по разделителю (TAB) на колонки, выводит запрошенные
+
+Поддержать флаги:
+-f - "fields" - выбрать поля (колонки)
+-d - "delimiter" - использовать другой разделитель
+-s - "separated" - только строки с разделителем
+
+Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
+*/
+
 import (
 	"bufio"
 	"errors"
@@ -27,6 +40,7 @@ func main() {
 	getResult(*args)
 }
 
+// Вывод результирующих строк
 func getResult(args flags) []string {
 	resultChan := make(chan string)
 	go parseStrings(args, resultChan)
@@ -38,6 +52,7 @@ func getResult(args flags) []string {
 	return results
 }
 
+// Парсинг строк
 func parseStrings(args flags, resultChan chan string) {
 	scanner := bufio.NewScanner(os.Stdin)
 	sb := strings.Builder{}
@@ -71,6 +86,7 @@ func parseStrings(args flags, resultChan chan string) {
 	}
 }
 
+// Парсим флаги
 func parseFlags() (*flags, error) {
 	fFlag := flag.String("f", "0", "выбрать поля (колонки)")
 	dFlag := flag.String("d", "\t", "использовать другой разделитель")
@@ -96,6 +112,7 @@ func parseFlags() (*flags, error) {
 		s: *sFlag}, nil
 }
 
+// Парсим числа при запуске программы для вывода определнных столбцов по регулярным выражениям
 func searchReg(strReg string) ([]int, error) {
 	var result []int
 	seen := make(map[int]struct{})
