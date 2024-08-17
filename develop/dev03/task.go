@@ -1,5 +1,30 @@
 package main
 
+/*
+=== Утилита sort ===
+
+Отсортировать строки (man sort)
+Основное
+
+Поддержать ключи
+
+-k — указание колонки для сортировки
+-n — сортировать по числовому значению
+-r — сортировать в обратном порядке
+-u — не выводить повторяющиеся строки
+
+Дополнительное
+
+Поддержать ключи
+
+-M — сортировать по названию месяца
+-b — игнорировать хвостовые пробелы
+-c — проверять отсортированы ли данные
+-h — сортировать по числовому значению с учётом суффиксов
+
+Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
+*/
+
 import (
 	"bufio"
 	"errors"
@@ -40,7 +65,7 @@ func main() {
 	}
 }
 
-/* Если флаг активирован то будет выполняться сортировка соответствующая флагу */
+// Если флаг активирован то будет выполняться сортировка соответствующая флагу
 func sortStrings(data []string, args flags) []string {
 	if *args.k > 0 {
 		kFlag(&data, args)
@@ -69,7 +94,7 @@ func sortStrings(data []string, args flags) []string {
 	return data
 }
 
-/* Парсинг флагов */
+// Парсинг флагов
 func parseFlags() flags {
 	args := flags{}
 	args.k = flag.Int("k", 0, "указание колонки для сортировки")
@@ -84,7 +109,7 @@ func parseFlags() flags {
 	return args
 }
 
-/* Парсинг файлов */
+// Парсинг файлов
 func parseFiles(args *flags) ([]string, error) {
 	data := make([]string, 0, 5)
 	ok := false
@@ -99,7 +124,7 @@ func parseFiles(args *flags) ([]string, error) {
 	return data, nil
 }
 
-/* Находим все файлы */
+// Находим все файлы
 func pathFiles(args *flags) {
 	for _, val := range os.Args[1:] {
 		if val[0] != '-' {
@@ -108,7 +133,7 @@ func pathFiles(args *flags) {
 	}
 }
 
-/* Сканирование файлов */
+// Сканирование файлов
 func scanFile(path string, data *[]string) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -121,12 +146,12 @@ func scanFile(path string, data *[]string) {
 	}
 }
 
-/* 1.Дефолтная сортировка без флагов */
+// 1.Дефолтная сортировка без флагов
 func nonFlag(data *[]string) {
 	sort.Strings(*data)
 }
 
-/* 2.Сортировка по k-й колонке, где колонками в строке являются слова разделенные пробелами */
+// 2.Сортировка по k-й колонке, где колонками в строке являются слова разделенные пробелами
 func kFlag(data *[]string, args flags) {
 	less := func(i, j int) bool {
 		if *args.k < 1 {
@@ -148,7 +173,7 @@ func kFlag(data *[]string, args flags) {
 	sort.Slice(*data, less)
 }
 
-/* 3.сортировать по числовому значению */
+// 3.сортировать по числовому значению
 func nFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
@@ -178,7 +203,7 @@ func parseNum(arr string) float64 {
 	return res
 }
 
-/* 4. делает слайс в обратном порядке */
+// 4. делает слайс в обратном порядке
 func rFlag(data *[]string) {
 	last := len(*data) - 1
 	for i := 0; i < len(*data)/2; i++ {
@@ -186,7 +211,7 @@ func rFlag(data *[]string) {
 	}
 }
 
-/* 5.Убрать дубликаты строк */
+// 5.Убрать дубликаты строк
 func uFlag(data *[]string) {
 	m := make(map[string]string, len(*data))
 	result := make([]string, 0, len(*data))
@@ -200,7 +225,7 @@ func uFlag(data *[]string) {
 	*data = result
 }
 
-/* 6.Сортировать по названию месяца */
+// 6.Сортировать по названию месяца
 func mFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
@@ -240,7 +265,7 @@ func parseMonth(arr string) int {
 	return 0 // Значение по умолчанию, если месяц не найден
 }
 
-/* 7.Игнорировать хвостовые пробелы */
+// 7.Игнорировать хвостовые пробелы
 func bFlag(data *[]string) {
 	less := func(i, j int) bool {
 		return strings.TrimSpace((*data)[i]) < strings.TrimSpace((*data)[j])
@@ -248,7 +273,7 @@ func bFlag(data *[]string) {
 	sort.Slice(*data, less)
 }
 
-/* 8.Проверять отсортированы ли данные */
+// 8.Проверять отсортированы ли данные
 func cFlag(data *[]string) bool {
 	for i := 0; i < len(*data)-1; i++ {
 		if (*data)[i] > (*data)[i+1] {
@@ -259,7 +284,7 @@ func cFlag(data *[]string) bool {
 	return true
 }
 
-/* 9.ортировать по числовому значению с учетом суффиксов */
+// 9.ортировать по числовому значению с учетом суффиксов
 func hFlag(data *[]string) {
 	less := func(i, j int) bool {
 		arr1 := strings.Fields((*data)[i])
@@ -274,7 +299,7 @@ func hFlag(data *[]string) {
 	sort.Slice(*data, less)
 }
 
-/* Проверка есть ли суффик и корректное ли число перед ним */
+// Проверка есть ли суффик и корректное ли число перед ним
 func searchSuffix(arr string) (float64, int) {
 	i := 0
 	for checkPoint := 0; i < len(arr) && (unicode.IsDigit(rune(arr[i])) || arr[i] == '.'); {
@@ -298,7 +323,7 @@ func searchSuffix(arr string) (float64, int) {
 	return num, parseSuffix(arr, i)
 }
 
-/* Обработка суффиксов */
+// Обработка суффиксов
 func parseSuffix(arr string, i int) int {
 	var suffix rune
 	if len(arr) > i {
