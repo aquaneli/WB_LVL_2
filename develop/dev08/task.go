@@ -1,5 +1,19 @@
 package main
 
+/*
+=== Взаимодействие с ОС ===
+
+Необходимо реализовать собственный шелл
+
+встроенные команды: cd/pwd/echo/kill/ps
+поддержать fork/exec команды
+конвеер на пайпах
+
+Реализовать утилиту netcat (nc) клиент
+принимать данные из stdin и отправлять в соединение (tcp/udp)
+Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
+*/
+
 import (
 	"bufio"
 	"fmt"
@@ -15,6 +29,7 @@ func main() {
 	unixShellUtil()
 }
 
+// Запуск программы в бесконечном цикле
 func unixShellUtil() {
 	bs := bufio.NewScanner(os.Stdin)
 	for {
@@ -55,6 +70,7 @@ func unixShellUtil() {
 	}
 }
 
+// Перемещение по директориям
 func cd(cmd []string) {
 	if len(cmd) == 1 {
 		home, err := os.UserHomeDir()
@@ -77,6 +93,7 @@ func cd(cmd []string) {
 	}
 }
 
+// Вывод пути
 func pwd() {
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -85,6 +102,7 @@ func pwd() {
 	fmt.Println(currentDir)
 }
 
+// Вывести строку в stdout
 func echo(cmd []string) {
 	if len(cmd) > 1 {
 		fmt.Println(strings.Join(cmd[1:], " "))
@@ -94,6 +112,7 @@ func echo(cmd []string) {
 
 }
 
+// Убить процесс
 func kill(cmd []string) {
 	if len(cmd) > 1 {
 		arr := make([]int, 0, len(cmd))
@@ -124,6 +143,7 @@ func kill(cmd []string) {
 	}
 }
 
+// Вывести pid процессы
 func ps() {
 	processes, err := process.Processes()
 	if err != nil {
