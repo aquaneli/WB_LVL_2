@@ -40,7 +40,7 @@ func TestWrite(t *testing.T) {
 		w.WriteString("stop\n")
 	}()
 
-	go WriteData(conn, sig, &wg)
+	go writeData(conn, sig, &wg)
 	wg.Wait()
 
 	time.Sleep(time.Second * 1)
