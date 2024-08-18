@@ -54,7 +54,7 @@ func TestHandlerUpdateEvent(t *testing.T) {
 
 	rrUpdate := httptest.NewRecorder()
 
-	updateURL := "http://localhost:8080/update_event?user_id=1&date=2010-05-12&uuid=" + h.Info.EventId[0]
+	updateURL := "http://localhost:8080/update_event?user_id=1&date=2010-05-12&uuid=" + h.Info.EventID[0]
 	reqUpdate, err := http.NewRequest("POST", updateURL, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -90,7 +90,7 @@ func TestHandlerDeleteEvent(t *testing.T) {
 
 	rrDelete := httptest.NewRecorder()
 
-	deleteURL := "http://localhost:8080/update_event?user_id=1&date=2010-05-12&uuid=" + h.Info.EventId[0]
+	deleteURL := "http://localhost:8080/update_event?user_id=1&date=2010-05-12&uuid=" + h.Info.EventID[0]
 	reqDelete, err := http.NewRequest("POST", deleteURL, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -194,8 +194,8 @@ func TestHandlerEventsForWeek(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	if len(h.Info.EventId) != 2 {
-		t.Errorf("expected len %q but got %q", 2, len(h.Info.EventId))
+	if len(h.Info.EventID) != 2 {
+		t.Errorf("expected len %q but got %q", 2, len(h.Info.EventID))
 	}
 
 }
@@ -249,8 +249,8 @@ func TestHandlerEventsForYear(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	if len(h.Info.EventId) != 3 {
-		t.Errorf("expected len %d but got %d", 3, len(h.Info.EventId))
+	if len(h.Info.EventID) != 3 {
+		t.Errorf("expected len %d but got %d", 3, len(h.Info.EventID))
 	}
 
 }

@@ -8,33 +8,37 @@ import (
 	"time"
 )
 
+// Storage cтурктура в которой хранятся информация обо всех эвентах и всех пользователях
 type Storage struct {
-	Items map[int]map[string]events
+	Items map[int]map[string]Events
 }
 
-type events struct {
+// Events хранит информацию об эвентах за день
+type Events struct {
 	UniqCodeEvents map[string]struct{}
 	Date           time.Time
 }
 
+// NewStorge cоздает новое хранилище для информации об эвентах
 func NewStorge() *Storage {
-	return &Storage{Items: make(map[int]map[string]events)}
+	return &Storage{Items: make(map[int]map[string]Events)}
 }
 
-func (s *Storage) Add(UserIdKey, DateVal string) (string, int) {
-	id, dateParse, status := BadRequest(UserIdKey, DateVal)
+// Add добавляет данные в структуру
+func (s *Storage) Add(UserIDKey, DateVal string) (string, int) {
+	id, dateParse, status := BadRequest(UserIDKey, DateVal)
 	if status != http.StatusOK {
 		return "", status
 	}
 
 	//если пользовтеля не существует
 	if _, ok := (*s).Items[id]; !ok {
-		(*s).Items[id] = make(map[string]events)
+		(*s).Items[id] = make(map[string]Events)
 	}
 
 	//если такой даты-ключа не существует
 	if _, ok := s.Items[id][DateVal]; !ok {
-		s.Items[id][DateVal] = events{UniqCodeEvents: make(map[string]struct{}), Date: dateParse}
+		s.Items[id][DateVal] = Events{UniqCodeEvents: make(map[string]struct{}), Date: dateParse}
 	}
 
 	uuid, err := getUniqCode()
@@ -47,8 +51,9 @@ func (s *Storage) Add(UserIdKey, DateVal string) (string, int) {
 	return uuid, http.StatusOK
 }
 
-func (s *Storage) UpDate(UserIdKey, DateValReplace, CodeEvent string) int {
-	id, dateParse, status := BadRequest(UserIdKey, DateValReplace)
+// UpDate обновляет дату евента по uuid
+func (s *Storage) UpDate(UserIDKey, DateValReplace, CodeEvent string) int {
+	id, dateParse, status := BadRequest(UserIDKey, DateValReplace)
 	if status != http.StatusOK {
 		return status
 	}
@@ -62,7 +67,7 @@ func (s *Storage) UpDate(UserIdKey, DateValReplace, CodeEvent string) int {
 		_, ok = (*s).Items[id][key].UniqCodeEvents[CodeEvent]
 		if ok {
 			if _, okReplace := (*s).Items[id][DateValReplace]; !okReplace {
-				(*s).Items[id][DateValReplace] = events{UniqCodeEvents: make(map[string]struct{}), Date: dateParse}
+				(*s).Items[id][DateValReplace] = Events{UniqCodeEvents: make(map[string]struct{}), Date: dateParse}
 			}
 			(*s).Items[id][DateValReplace].UniqCodeEvents[CodeEvent] = struct{}{}
 			delete((*s).Items[id][key].UniqCodeEvents, CodeEvent)
@@ -77,8 +82,9 @@ func (s *Storage) UpDate(UserIdKey, DateValReplace, CodeEvent string) int {
 	return http.StatusOK
 }
 
-func (s *Storage) Remove(UserIdKey, DateVal, CodeEvent string) int {
-	id, _, status := BadRequest(UserIdKey, DateVal)
+// Remove удаляет эвент
+func (s *Storage) Remove(UserIDKey, DateVal, CodeEvent string) int {
+	id, _, status := BadRequest(UserIDKey, DateVal)
 	if status != http.StatusOK {
 		return status
 	}
@@ -104,8 +110,9 @@ func (s *Storage) Remove(UserIdKey, DateVal, CodeEvent string) int {
 	return http.StatusOK
 }
 
-func (s *Storage) GetEventsForDay(UserIdKey string, DateVal string) (*events, int) {
-	id, _, status := BadRequest(UserIdKey, DateVal)
+// GetEventsForDay возвращает все эвенты за день определенного пользователя
+func (s *Storage) GetEventsForDay(UserIDKey string, DateVal string) (*Events, int) {
+	id, _, status := BadRequest(UserIDKey, DateVal)
 	if status != http.StatusOK {
 		return nil, status
 	}
@@ -123,8 +130,9 @@ func (s *Storage) GetEventsForDay(UserIdKey string, DateVal string) (*events, in
 	return &events, http.StatusOK
 }
 
-func (s *Storage) GetEventsForWeek(UserIdKey string, DateVal string) (*[]events, int) {
-	id, startDate, status := BadRequest(UserIdKey, DateVal)
+// GetEventsForWeek возвращает все эвенты за неделю определенного пользователя
+func (s *Storage) GetEventsForWeek(UserIDKey string, DateVal string) (*[]Events, int) {
+	id, startDate, status := BadRequest(UserIDKey, DateVal)
 	if status != http.StatusOK {
 		return nil, status
 	}
@@ -132,7 +140,7 @@ func (s *Storage) GetEventsForWeek(UserIdKey string, DateVal string) (*[]events,
 		return nil, http.StatusServiceUnavailable
 	}
 
-	eventsForWeek := []events{}
+	eventsForWeek := []Events{}
 
 	for _, event := range s.Items[id] {
 		if (event.Date.Equal(startDate) || event.Date.After(startDate)) &&
@@ -148,8 +156,9 @@ func (s *Storage) GetEventsForWeek(UserIdKey string, DateVal string) (*[]events,
 	return &eventsForWeek, http.StatusOK
 }
 
-func (s *Storage) GetEventsForYear(UserIdKey string, DateVal string) (*[]events, int) {
-	id, startDate, status := BadRequest(UserIdKey, DateVal)
+// GetEventsForYear возвращает все эвенты за год определенного пользователя
+func (s *Storage) GetEventsForYear(UserIDKey string, DateVal string) (*[]Events, int) {
+	id, startDate, status := BadRequest(UserIDKey, DateVal)
 	if status != http.StatusOK {
 		return nil, status
 	}
@@ -158,7 +167,7 @@ func (s *Storage) GetEventsForYear(UserIdKey string, DateVal string) (*[]events,
 		return nil, http.StatusServiceUnavailable
 	}
 
-	eventsForYear := []events{}
+	eventsForYear := []Events{}
 	for _, event := range s.Items[id] {
 		if (event.Date.Equal(startDate) || event.Date.After(startDate)) &&
 			(event.Date.Before(startDate.AddDate(1, 0, 0)) || event.Date.Equal(startDate.AddDate(1, 0, 0))) {
@@ -173,9 +182,9 @@ func (s *Storage) GetEventsForYear(UserIdKey string, DateVal string) (*[]events,
 	return &eventsForYear, http.StatusOK
 }
 
-// обработка ошибки 400
-func BadRequest(UserIdKey, DateVal string) (int, time.Time, int) {
-	id, err := strconv.Atoi(UserIdKey)
+// BadRequest обрабатывает ошибки 400
+func BadRequest(UserIDKey, DateVal string) (int, time.Time, int) {
+	id, err := strconv.Atoi(UserIDKey)
 	if err != nil {
 		return 0, time.Time{}, http.StatusBadRequest
 	}

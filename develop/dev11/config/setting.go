@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config структура в которую будут десериализоваться данные из config .yaml
 type Config struct {
 	Server struct {
 		IP   string `yaml:"ip"`
@@ -13,6 +14,7 @@ type Config struct {
 	} `yaml:"server"`
 }
 
+// ReadConfig cчитывает данные из конфига .yaml
 func ReadConfig(filename string) (*Config, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
